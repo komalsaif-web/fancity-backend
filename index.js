@@ -13,10 +13,12 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-const matchRoutes = require('./routes/matchRoutes');
+const matchRoutes = require('./routes/cricketRoutes');
 const footbalRoutes = require('./routes/footbalRoutes');
+const hockeyRoutes = require('./routes/hockeyRoutes');
 app.use('/api/matches', matchRoutes);
 app.use('/api', footbalRoutes);
+app.use('/api', hockeyRoutes);
 
 
 // Export handler for Vercel
