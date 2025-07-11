@@ -17,7 +17,6 @@ const matchRoutes = require('./routes/cricketRoutes');
 const footbalRoutes = require('./routes/footbalRoutes');
 const hockeyRoutes = require('./routes/hockeyRoutes');
 const basketballRoutes = require('./routes/basketballRoutes');
-const basketballRoutes = require('./routes/basketballRoutes');
 const tennisRoutes = require('./routes/tennisRoutes')
 app.use('/api', basketballRoutes);
 app.use('/api/matches', matchRoutes);
