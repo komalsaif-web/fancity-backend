@@ -16,6 +16,8 @@ app.get('/', (req, res) => {
 const matchRoutes = require('./routes/cricketRoutes');
 const footbalRoutes = require('./routes/footbalRoutes');
 const hockeyRoutes = require('./routes/hockeyRoutes');
+const basketballRoutes = require('./routes/basketballRoutes');
+app.use('/api', basketballRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api', footbalRoutes);
 app.use('/api', hockeyRoutes);
