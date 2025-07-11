@@ -13,6 +13,27 @@ exports.getLiveTennisMatches = async (req, res) => {
       const competitors = match?.sport_event?.competitors || [];
       const team1 = competitors[0]?.name || "TBD";
       const team2 = competitors[1]?.name || "TBD";
+      const status = match.sport_event_status?.match_status || "Live";
+
+      const sets = match.sport_event_status?.period_scores || [];
+      const points = match.sport_event_status?.game_score;
+
+      let score = "";
+
+      // Add each set score
+      if (sets.length > 0) {
+        const setScores = sets.map((set, index) => {
+          return `Set ${index + 1}: ${set.home_score}-${set.away_score}`;
+        });
+        score += setScores.join(" | ");
+      }
+
+      // Append current game score (if available)
+      if (points?.server) {
+        score += ` | Current Game: ${points.home_score}-${points.away_score} (Server: ${points.server})`;
+      }
+
+      if (!score) score = "Not available";
 
       return {
         sport: "tennis",
@@ -20,11 +41,11 @@ exports.getLiveTennisMatches = async (req, res) => {
         team_2: team2,
         team_1_flag: null,
         team_2_flag: null,
-        status: match.sport_event_status?.match_status || "Live",
-        score: match.sport_event_status?.score?.toString() || "N/A",
+        status,
+        score,
         team_1_ratio: Math.floor(Math.random() * 100),
-        team_2_ratio: 100 - Math.floor(Math.random() * 100),
-        youtube_url: null // no YouTube integration here
+        team_2_ratio: Math.floor(Math.random() * 100),
+        youtube_url: null
       };
     });
 
