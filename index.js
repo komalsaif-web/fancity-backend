@@ -14,7 +14,10 @@ app.get('/', (req, res) => {
 
 // Routes
 const matchRoutes = require('./routes/matchRoutes');
+const footbalRoutes = require('./routes/footbalRoutes');
 app.use('/api/matches', matchRoutes);
+app.use('/api', footbalRoutes);
+
 
 // Export handler for Vercel
 module.exports = (req, res) => {
