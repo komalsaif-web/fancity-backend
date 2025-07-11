@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-const matchRoutes = require('../routes/matchRoutes'); // adjust path if needed
+const matchRoutes = require('./routes/matchRoutes'); 
 app.use('/api/matches', matchRoutes);
 
 // Export handler for Vercel
