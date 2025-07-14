@@ -13,13 +13,13 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-const matchRoutes = require('./routes/cricketRoutes');
+const cricketRoutes = require('./routes/cricketRoutes');
 const footbalRoutes = require('./routes/footbalRoutes');
 const hockeyRoutes = require('./routes/hockeyRoutes');
 const basketballRoutes = require('./routes/basketballRoutes');
 const tennisRoutes = require('./routes/tennisRoutes')
 app.use('/api', basketballRoutes);
-app.use('/api/matches', matchRoutes);
+app.use('/api', cricketRoutes);
 app.use('/api', footbalRoutes);
 app.use('/api', hockeyRoutes);
 app.use('/api', tennisRoutes);

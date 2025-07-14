@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getLiveMatches } = require('../controllers/cricketController');
+const {
+  getLiveMatches,
+  getUpcomingMatches
+} = require('../controllers/cricketController');
 
-router.get('/live', getLiveMatches);
+router.get('/cricket/live', getLiveMatches); // 🔴 Live
+router.get('/cricket/upcoming', getUpcomingMatches); // 🟡 Upcoming
 
 module.exports = router;
