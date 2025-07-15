@@ -63,109 +63,52 @@ exports.getLiveMatches = async (req, res) => {
   }
 };
 
-// // ✅ UPCOMING MATCHES
-// exports.getUpcomingMatches = async (req, res) => {
-//   try {
-//     const response = await axios.get(`https://api.cricapi.com/v1/matches?apikey=${process.env.CRICAPI_KEY}`);
-//     const matches = response.data.data || [];
-
-//     const upcomingMatches = matches
-//       .filter(match => match.matchStarted === false && Array.isArray(match.teams) && match.teams.length >= 2)
-//       .map(match => {
-//         const dateTimeStr = match.dateTimeGMT || '';
-//         let date = 'TBD', time = 'TBD';
-
-//         if (dateTimeStr) {
-//           try {
-//             const dt = new Date(dateTimeStr);
-//             date = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-//             time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-//           } catch (_) {}
-//         }
-
-//         const team1 = match.teams?.[0] || match.teamInfo?.[0]?.name || "Team 1";
-//         const team2 = match.teams?.[1] || match.teamInfo?.[1]?.name || "Team 2";
-//         const team1Flag = match.teamInfo?.[0]?.img || 'https://h.cricapi.com/img/icon512.png';
-//         const team2Flag = match.teamInfo?.[1]?.img || 'https://h.cricapi.com/img/icon512.png';
-//         const league = match.series || 'Unknown League';
-//         const venue = match.venue || 'TBD';
-
-//         return {
-//           sport: "cricket",
-//           team_1: team1,
-//           team_2: team2,
-//           team_1_flag: team1Flag,
-//           team_2_flag: team2Flag,
-//           status: "Upcoming",
-//           match_date: date,
-//           match_time: time,
-//           league,
-//           venue,
-//           youtube_url: null
-//         };
-//       });
-
-//     res.json(upcomingMatches);
-//   } catch (err) {
-//     console.error("Upcoming match fetch error:", err.message);
-//     res.status(500).json({ error: "Failed to fetch upcoming matches" });
-//   }
-// };
-
-// ✅ UPCOMING MATCHES (Cricbuzz - RapidAPI)
+// upcoming
 exports.getUpcomingMatches = async (req, res) => {
   try {
-    const response = await axios.get('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming', {
-      headers: {
-        'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY // add this in .env
-      }
-    });
+    const response = await axios.get(`https://api.cricapi.com/v1/matches?apikey=${process.env.CRICAPI_KEY}`);
+    const matches = response.data.data || [];
 
-    const matchData = response.data.typeMatches || [];
+    const upcomingMatches = matches
+      .filter(match => match.matchStarted === false && Array.isArray(match.teams) && match.teams.length >= 2)
+      .map(match => {
+        const dateTimeStr = match.dateTimeGMT || '';
+        let date = 'TBD', time = 'TBD';
 
-    const upcomingMatches = [];
-
-    for (const matchType of matchData) {
-      if (!Array.isArray(matchType.seriesMatches)) continue;
-
-      for (const seriesMatch of matchType.seriesMatches) {
-        const matchList = seriesMatch.seriesAdWrapper?.matches || [];
-
-        for (const match of matchList) {
-          if (!match.matchInfo || match.matchInfo.state !== "UPCOMING") continue;
-
-          const { team1, team2, venueInfo, startDate, seriesName } = match.matchInfo;
-
-          const team1Name = team1?.teamName || "Team 1";
-          const team2Name = team2?.teamName || "Team 2";
-          const team1Flag = `https://cricbuzz-cricket.p.rapidapi.com/team-flag/${team1?.id}.png`;
-          const team2Flag = `https://cricbuzz-cricket.p.rapidapi.com/team-flag/${team2?.id}.png`;
-
-          const dateObj = new Date(startDate);
-          const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-          const matchTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-          upcomingMatches.push({
-            sport: "cricket",
-            team_1: team1Name,
-            team_2: team2Name,
-            team_1_flag: team1Flag,
-            team_2_flag: team2Flag,
-            status: "Upcoming",
-            match_date: matchDate,
-            match_time: matchTime,
-            league: seriesName || "Unknown League",
-            venue: venueInfo?.ground || "TBD",
-            youtube_url: null
-          });
+        if (dateTimeStr) {
+          try {
+            const dt = new Date(dateTimeStr);
+            date = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          } catch (_) {}
         }
-      }
-    }
+
+        const team1 = match.teams?.[0] || match.teamInfo?.[0]?.name || "Team 1";
+        const team2 = match.teams?.[1] || match.teamInfo?.[1]?.name || "Team 2";
+        const team1Flag = match.teamInfo?.[0]?.img || 'https://h.cricapi.com/img/icon512.png';
+        const team2Flag = match.teamInfo?.[1]?.img || 'https://h.cricapi.com/img/icon512.png';
+        const league = match.series || 'Unknown League';
+        const venue = match.venue || 'TBD';
+
+        return {
+          sport: "cricket",
+          team_1: team1,
+          team_2: team2,
+          team_1_flag: team1Flag,
+          team_2_flag: team2Flag,
+          status: "Upcoming",
+          match_date: date,
+          match_time: time,
+          league,
+          venue,
+          youtube_url: null
+        };
+      });
 
     res.json(upcomingMatches);
   } catch (err) {
-    console.error("Upcoming matches fetch error:", err.message);
+    console.error("Upcoming match fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch upcoming matches" });
   }
 };
+
