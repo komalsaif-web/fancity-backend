@@ -1,11 +1,15 @@
 const axios = require('axios');
-require('dotenv').config();
 
+// 🔐 Your API Football credentials (hardcoded)
+const FOOTBALL_API_KEY = 'c1a411feb8msh42a7436b8c131afp12f762jsnc3cf3b8ca791';
+const FOOTBALL_API_HOST = 'api-football-v1.p.rapidapi.com';
+
+// ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://v3.football.api-sports.io/fixtures', {
       headers: {
-        'x-apisports-key': process.env.FOOTBALL_API_KEY,
+        'x-apisports-key': FOOTBALL_API_KEY,
       },
       params: {
         live: 'all',
@@ -24,11 +28,9 @@ exports.getLiveFootballMatches = async (req, res) => {
       const status = match.fixture.status.long;
       const score = `${match.goals.home} - ${match.goals.away}`;
 
-      // Dummy win ratio logic (optional)
       const team1Ratio = Math.floor(Math.random() * 100);
       const team2Ratio = 100 - team1Ratio;
 
-      // 🔍 YouTube live search
       let youtube_url = null;
       try {
         const yt = await axios.get('https://www.googleapis.com/youtube/v3/search', {
@@ -37,7 +39,7 @@ exports.getLiveFootballMatches = async (req, res) => {
             q: `${homeTeam} vs ${awayTeam} live football`,
             type: 'video',
             eventType: 'live',
-            key: process.env.YOUTUBE_API_KEY,
+            key: 'YOUR_YOUTUBE_API_KEY', // replace with your actual key
             maxResults: 1,
           },
         });
@@ -66,5 +68,43 @@ exports.getLiveFootballMatches = async (req, res) => {
   } catch (err) {
     console.error("Football match fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch football matches" });
+  }
+};
+
+// ✅ UPCOMING FOOTBALL MATCHES
+exports.getUpcomingFootballMatches = async (req, res) => {
+  try {
+    const response = await axios.get('https://api-football-v1.p.rapidapi.com/v2/odds/league/865927/bookmaker/5?page=2', {
+      headers: {
+        'x-rapidapi-key': FOOTBALL_API_KEY,
+        'x-rapidapi-host': FOOTBALL_API_HOST,
+      },
+    });
+
+    const data = response.data.data || [];
+
+    const upcomingMatches = data.map(match => {
+      const dateTime = new Date(match.match_start);
+      const date = dateTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const time = dateTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      return {
+        sport: "football",
+        league: match.league_name || 'Unknown League',
+        match_date: date,
+        match_time: time,
+        team_1: match.home_team || 'Team 1',
+        team_2: match.away_team || 'Team 2',
+        team_1_flag: '', // logo not available in this API
+        team_2_flag: '',
+        status: 'Upcoming',
+        odds: match.odds || [],
+      };
+    });
+
+    res.json(upcomingMatches);
+  } catch (err) {
+    console.error("Upcoming football match fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
