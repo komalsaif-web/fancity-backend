@@ -76,8 +76,7 @@ exports.getUpcomingFootballMatches = async (req, res) => {
         'x-apisports-key': process.env.FOOTBALL_API_KEY,
       },
       params: {
-        next: 100,
-        timezone: 'Asia/Karachi', // Get next 10 upcoming matches
+        next: 10, // Get next 10 upcoming matches
       },
     });
 
