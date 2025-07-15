@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getLiveFootballMatches } = require('../controllers/footballController');
+const {
+  getLiveFootballMatches,
+  getUpcomingFootballMatches
+} = require('../controllers/footballController');
 
-router.get('/footbal-live', getLiveFootballMatches);
+router.get('/football-live', getLiveFootballMatches);
+router.get('/football-upcoming', getUpcomingFootballMatches);
 
 module.exports = router;
