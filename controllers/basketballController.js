@@ -6,12 +6,12 @@ exports.getLiveBasketballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://v1.basketball.api-sports.io/fixtures?live=all', {
       headers: {
-        'x-apisports-key': process.env.BASKETBALL_API_KEY
+        'x-apisports-key': process.env.ALL_SPORTS_API_KEY,  // 👈 All Sports API key
+        'x-rapidapi-host': 'v1.basketball.api-sports.io'     // Optional, if RapidAPI used
       }
     });
 
     const matches = response.data.response;
-
     const results = [];
 
     for (const match of matches) {
@@ -22,11 +22,11 @@ exports.getLiveBasketballMatches = async (req, res) => {
       const status = match.status.long;
       const score = `${match.scores.home.total} - ${match.scores.away.total}`;
 
-      // 🔁 Random win ratio (fake logic)
+      // Random win ratio
       const team1Ratio = Math.floor(Math.random() * 100);
       const team2Ratio = 100 - team1Ratio;
 
-      // 🔴 YouTube Live Stream Search
+      // 🔴 YouTube Live Stream Search (Optional)
       let youtube_url = null;
       try {
         const yt = await axios.get('https://www.googleapis.com/youtube/v3/search', {
