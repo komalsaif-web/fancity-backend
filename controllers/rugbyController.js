@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-exports.getRugbyMatches = async (req, res) => {
-  const { date = '2025-07-19', timezone = 'Asia/Karachi' } = req.query;
+exports.getLiveRugbyMatches = async (req, res) => {
+  const { timezone = 'Asia/Karachi' } = req.query;
 
   try {
     const response = await axios.get('https://v1.rugby.api-sports.io/games', {
@@ -9,7 +9,7 @@ exports.getRugbyMatches = async (req, res) => {
         'x-apisports-key': '8418de2cdd88bb19f017e22ef83e8d8f'
       },
       params: {
-        date,
+        live: 'all',      // ✅ This will fetch all live matches
         timezone
       }
     });
@@ -39,7 +39,7 @@ exports.getRugbyMatches = async (req, res) => {
 
     res.json({ count: formatted.length, matches: formatted });
   } catch (err) {
-    console.error("Rugby API Error:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch rugby matches' });
+    console.error("Live Rugby API Error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch live rugby matches' });
   }
 };
