@@ -8,27 +8,38 @@ exports.getRugbyMatches = async (req, res) => {
       headers: {
         'x-apisports-key': '8418de2cdd88bb19f017e22ef83e8d8f'
       },
-      params: { date, timezone }
+      params: {
+        date,
+        timezone
+      }
     });
 
-    const games = response.data.response;
+    const matches = response.data.response || [];
 
-    const formattedMatches = games.map(game => ({
-      homeTeam: game.teams.home.name,
-      awayTeam: game.teams.away.name,
-      homeLogo: game.teams.home.logo,
-      awayLogo: game.teams.away.logo,
-      status: game.status.long,
-      score: `${game.scores.home.total ?? 'N/A'} - ${game.scores.away.total ?? 'N/A'}`,
-      league: game.league.name,
-      country: game.league.country,
-      season: game.league.season,
-      date: game.date
+    const formatted = matches.map(match => ({
+      id: match.id,
+      date: match.date.start,
+      status: match.status?.long || 'Unknown',
+      league: match.league?.name || 'N/A',
+      country: match.league?.country || 'N/A',
+      season: match.league?.season || 'N/A',
+      homeTeam: {
+        name: match.teams?.home?.name || 'N/A',
+        logo: match.teams?.home?.logo || ''
+      },
+      awayTeam: {
+        name: match.teams?.away?.name || 'N/A',
+        logo: match.teams?.away?.logo || ''
+      },
+      score: {
+        home: match.scores?.home || 'N/A',
+        away: match.scores?.away || 'N/A'
+      }
     }));
 
-    res.json({ count: formattedMatches.length, matches: formattedMatches });
-  } catch (error) {
-    console.error('Rugby fetch error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch Rugby matches' });
+    res.json({ count: formatted.length, matches: formatted });
+  } catch (err) {
+    console.error("Rugby API Error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch rugby matches' });
   }
 };
