@@ -1,7 +1,8 @@
-// routes/basketballRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getLiveBasketballMatches } = require('../controllers/basketballController');
+const sportsController = require('../controllers/basketballController');
 
-router.get('/basketball-live', getLiveBasketballMatches);
+// ✅ Dynamic sport live scores route
+router.get('/:sport/live-scores', sportsController.getLiveScoresBySport);
+
 module.exports = router;
