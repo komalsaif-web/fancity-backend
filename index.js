@@ -20,6 +20,7 @@ const basketballRoutes = require('./routes/basketballRoutes');
 const tennisRoutes = require('./routes/tennisRoutes')
 const vollybalRoutes = require('./routes/volleyballRoutes')
 const rugby= require('./routes/rugbyRoutes');
+const fiRoutes =require('./routes/f1Routes');      
 app.use('/api', basketballRoutes);
 app.use('/api', cricketRoutes);
 app.use('/api', footbalRoutes);
@@ -27,6 +28,7 @@ app.use('/api', hockeyRoutes);
 app.use('/api', tennisRoutes);
 app.use('/api', vollybalRoutes);
 app.use('/api', rugby);
+app.use('/api', fiRoutes);
 
 
 // Export handler for Vercel
