@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-exports.getLiveRugbyMatches = async (req, res) => {
+exports.getRugbyMatches  =async (req, res) => {
   const { timezone = 'Asia/Karachi' } = req.query;
 
   try {
