@@ -1,5 +1,10 @@
 const axios = require('axios');
 require('dotenv').config();
+const countries = require('i18n-iso-countries');
+
+// Register English locale for country name lookup
+countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
+
 const countryNameToCode = require('../utils/countryCodeMapper');
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
@@ -69,9 +74,6 @@ exports.getLiveFootballMatches = async (req, res) => {
 };
 
 
-// Optional: Helper to convert country name to ISO 3166-1 alpha-2 code
- // You can create this file
-
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
@@ -93,11 +95,15 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const team1 = homeTeam.name || "Team 1";
       const team2 = awayTeam.name || "Team 2";
 
-      const team1CountryCode = countryNameToCode(homeTeam.area?.name || team1);
-      const team2CountryCode = countryNameToCode(awayTeam.area?.name || team2);
+      const homeCountryName = homeTeam.area?.name || "Brazil";
+      const awayCountryName = awayTeam.area?.name || "Brazil";
 
-      const team1Flag = `https://flagcdn.com/w320/${team1CountryCode}.png`;
-      const team2Flag = `https://flagcdn.com/w320/${team2CountryCode}.png`;
+      // Convert country name to ISO 3166-1 alpha-2 code
+      const team1Code = countries.getAlpha2Code(homeCountryName, 'en')?.toLowerCase() || 'br';
+      const team2Code = countries.getAlpha2Code(awayCountryName, 'en')?.toLowerCase() || 'br';
+
+      const team1Flag = `https://flagcdn.com/w320/${team1Code}.png`;
+      const team2Flag = `https://flagcdn.com/w320/${team2Code}.png`;
 
       const dateObj = new Date(match.utcDate);
       const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -112,7 +118,7 @@ exports.getUpcomingFootballMatches = async (req, res) => {
         team_2_flag: team2Flag,
         match_date: matchDate,
         match_time: matchTime,
-        venue: match?.competition?.area?.name || "TBD", // Using country name as fallback
+        venue: match?.competition?.area?.name || "TBD",
         status: "Upcoming",
         youtube_url: null,
       };
