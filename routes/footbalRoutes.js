@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const {
   getLiveFootballMatches,
-getFootballFixtures
+  getUpcomingFootballMatches
 } = require('../controllers/footballController');
 
 router.get('/football-live', getLiveFootballMatches);
 
-router.get('/upcoming-football', getFootballFixtures);
+router.get('/upcoming-football', getUpcomingFootballMatches);
 
 module.exports = router;
