@@ -1,6 +1,6 @@
 const axios = require('axios');
 require('dotenv').config();
-const countries = require('country-list');
+
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
   try {
@@ -68,54 +68,42 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-
-
+// ✅ UPCOMING FOOTBALL MATCHES — NEXT 10
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
-    const response = await axios.get('https://api.football-data.org/v4/matches', {
+    const response = await axios.get('https://v3.football.api-sports.io/fixtures', {
       headers: {
-        'X-Auth-Token': process.env.FOOTBALLDATA_API_KEY,
+        'x-apisports-key': process.env.FOOTBALL_API_KEY,
       },
       params: {
-        status: 'SCHEDULED',
+        next: 10,
       },
     });
 
-    const matches = response.data.matches;
+    const matches = response.data.response;
 
-    const results = matches.slice(0, 10).map((match) => {
-      const homeTeam = match.homeTeam;
-      const awayTeam = match.awayTeam;
+    const results = matches.map(match => {
+      const homeTeam = match.teams.home.name;
+      const awayTeam = match.teams.away.name;
+      const homeLogo = match.teams.home.logo;
+      const awayLogo = match.teams.away.logo;
 
-      const team1 = homeTeam.name || "Team 1";
-      const team2 = awayTeam.name || "Team 2";
-
-      // Try to get country from match area or default to "Unknown"
-      const homeCountry = homeTeam?.area?.name || match.competition?.area?.name || "Unknown";
-      const awayCountry = awayTeam?.area?.name || match.competition?.area?.name || "Unknown";
-
-      const team1Code = countries.getCode(homeCountry) ? countries.getCode(homeCountry).toLowerCase() : 'unknown';
-      const team2Code = countries.getCode(awayCountry) ? countries.getCode(awayCountry).toLowerCase() : 'unknown';
-
-      const team1Flag = `https://flagcdn.com/w320/${team1Code}.png`;
-      const team2Flag = `https://flagcdn.com/w320/${team2Code}.png`;
-
-      const dateObj = new Date(match.utcDate);
+      const dateObj = new Date(match.fixture.date);
       const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
       const matchTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
       return {
         sport: "football",
-        competition: match.competition.name || "Unknown League",
-        team_1: team1,
-        team_2: team2,
-        team_1_flag: team1Flag,
-        team_2_flag: team2Flag,
+        competition: match.league.name || "Unknown League",
+        team_1: homeTeam,
+        team_2: awayTeam,
+        team_1_flag: homeLogo,
+        team_2_flag: awayLogo,
         match_date: matchDate,
         match_time: matchTime,
-        venue: match.venue || "TBD",
+        venue: match.fixture.venue?.name || "TBD",
         status: "Upcoming",
-        youtube_url: null,
+        youtube_url: null
       };
     });
 
@@ -125,4 +113,3 @@ exports.getUpcomingFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
-
