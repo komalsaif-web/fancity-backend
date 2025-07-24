@@ -68,48 +68,33 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-// ✅ UPCOMING FOOTBALL MATCHES
+// ✅ UPCOMING FOOTBALL MATCHES (from football-data.org)
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
-    const response = await axios.get('https://v3.football.api-sports.io/fixtures', {
+    const response = await axios.get('https://api.football-data.org/v4/matches', {
       headers: {
-        'x-apisports-key': process.env.FOOTBALL_API_KEY,
+        'X-Auth-Token': process.env.FOOTBALLDATA_API_KEY, // make sure to set this key in .env
       },
       params: {
-        next: 10, // Get next 10 upcoming matches
+        status: 'SCHEDULED', // fetch only scheduled (upcoming) matches
+        limit: 10, // limit results
       },
     });
 
-    const upcomingMatches = response.data.response;
+    const matches = response.data.matches;
 
-    const results = upcomingMatches.map(match => {
-      const homeTeam = match.teams.home.name;
-      const awayTeam = match.teams.away.name;
-      const homeLogo = match.teams.home.logo;
-      const awayLogo = match.teams.away.logo;
-      const date = new Date(match.fixture.date);
-      const formattedDate = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-      const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-      return {
-        sport: "football",
-        team_1: homeTeam,
-        team_2: awayTeam,
-        team_1_flag: homeLogo,
-        team_2_flag: awayLogo,
-        status: "Upcoming",
-        match_date: formattedDate,
-        match_time: formattedTime,
-        score: "N/A",
-        youtube_url: null,
-        team_1_ratio: Math.floor(Math.random() * 100),
-        team_2_ratio: Math.floor(Math.random() * 100)
-      };
-    });
+    const results = matches.map((match) => ({
+      sport: "football",
+      competition: match.competition.name,
+      team_1: match.homeTeam.name,
+      team_2: match.awayTeam.name,
+      match_time: match.utcDate,
+      venue: match.venue || "TBD",
+    }));
 
     res.json(results);
   } catch (err) {
-    console.error("Upcoming football fetch error:", err.message);
+    console.error("Upcoming match fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };

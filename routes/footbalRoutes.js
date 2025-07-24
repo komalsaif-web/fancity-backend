@@ -6,6 +6,7 @@ const {
 } = require('../controllers/footballController');
 
 router.get('/football-live', getLiveFootballMatches);
-router.get('/football-upcoming', getUpcomingFootballMatches);
+
+router.get('/upcoming-football', getUpcomingFootballMatches);
 
 module.exports = router;
