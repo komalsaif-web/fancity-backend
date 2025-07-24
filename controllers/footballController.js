@@ -87,29 +87,38 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const homeTeam = match.homeTeam;
       const awayTeam = match.awayTeam;
 
-      // Safely extract country info if available
-      const homeCountry = homeTeam.area?.name || "Unknown";
-      const awayCountry = awayTeam.area?.name || "Unknown";
+      const team1 = homeTeam.name || "Team 1";
+      const team2 = awayTeam.name || "Team 2";
 
-      // Convert country name to lowercase and encode for URL
-      const homeFlag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
-      const awayFlag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+      // Attempt to get flags using country name or fallback
+      const homeCountry = homeTeam.area?.name || team1;
+      const awayCountry = awayTeam.area?.name || team2;
+
+      const team1Flag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
+      const team2Flag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+
+      const dateObj = new Date(match.utcDate);
+      const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const matchTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
       return {
         sport: "football",
-        competition: match.competition.name,
-        team_1: homeTeam.name,
-        team_2: awayTeam.name,
-        team_1_flag: homeFlag,
-        team_2_flag: awayFlag,
-        match_time: match.utcDate,
+        competition: match.competition.name || "Unknown League",
+        team_1: team1,
+        team_2: team2,
+        team_1_flag: team1Flag,
+        team_2_flag: team2Flag,
+        match_date: matchDate,
+        match_time: matchTime,
         venue: match.venue || "TBD",
+        status: "Upcoming",
+        youtube_url: null,
       };
     });
 
     res.json(results);
   } catch (err) {
-    console.error("Upcoming match fetch error:", err.message);
+    console.error("Upcoming football match fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
