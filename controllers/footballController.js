@@ -1,5 +1,19 @@
 const axios = require('axios');
 require('dotenv').config();
+// Static mapping of club names to their country for correct flag display
+const teamToCountry = {
+  "EC Juventude": "brazil",
+  "São Paulo FC": "brazil",
+  "Chelsea FC": "england",
+  "Manchester United FC": "england",
+  "FC Barcelona": "spain",
+  "Real Madrid CF": "spain",
+  "Bayern Munich": "germany",
+  "Juventus FC": "italy",
+  "Paris Saint-Germain": "france",
+  "Ajax": "netherlands",
+  // Add more as needed
+};
 
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
@@ -68,20 +82,6 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-// Static mapping of club names to their country for correct flag display
-const teamToCountry = {
-  "EC Juventude": "brazil",
-  "São Paulo FC": "brazil",
-  "Chelsea FC": "england",
-  "Manchester United FC": "england",
-  "FC Barcelona": "spain",
-  "Real Madrid CF": "spain",
-  "Bayern Munich": "germany",
-  "Juventus FC": "italy",
-  "Paris Saint-Germain": "france",
-  "Ajax": "netherlands",
-  // Add more as needed
-};
 
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
