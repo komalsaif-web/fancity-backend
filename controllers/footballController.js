@@ -67,24 +67,6 @@ exports.getLiveFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch football matches" });
   }
 };
-// ✅ Simple team-to-country code map
-const teamCountryMap = {
-  "EC Vitória": "BR",
-  "SC Recife": "BR",
-  "São Paulo FC": "BR",
-  "CR Flamengo": "BR",
-  "RB Bragantino": "BR",
-  "Grêmio FBPA": "BR",
-  "CR Vasco da Gama": "BR",
-  "EC Bahia": "BR",
-  "CA Mineiro": "BR",
-  "Fortaleza EC": "BR",
-  "Chelsea FC": "GB",
-  "FC Barcelona": "ES",
-  "Real Madrid CF": "ES",
-  "Paris Saint-Germain FC": "FR",
-  "FC Bayern München": "DE"
-};
 
 // ✅ UPCOMING FOOTBALL MATCHES (with flags)
 exports.getUpcomingFootballMatches = async (req, res) => {
@@ -95,34 +77,48 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       },
       params: {
         status: 'SCHEDULED',
-        limit: 15,
+        limit: 10,
       },
     });
 
     const matches = response.data.matches;
 
     const results = matches.map((match) => {
-      const team1 = match.homeTeam.name;
-      const team2 = match.awayTeam.name;
+      const homeTeam = match.homeTeam;
+      const awayTeam = match.awayTeam;
 
-      const team1Code = teamCountryMap[team1] || "unknown";
-      const team2Code = teamCountryMap[team2] || "unknown";
+      const team1 = homeTeam.name || "Team 1";
+      const team2 = awayTeam.name || "Team 2";
+
+      // Attempt to get flags using country name or fallback
+      const homeCountry = homeTeam.area?.name || team1;
+      const awayCountry = awayTeam.area?.name || team2;
+
+      const team1Flag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
+      const team2Flag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+
+      const dateObj = new Date(match.utcDate);
+      const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const matchTime = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
       return {
         sport: "football",
-        competition: match.competition.name,
+        competition: match.competition.name || "Unknown League",
         team_1: team1,
         team_2: team2,
-        team_1_flag: `https://countryflagsapi.com/png/${team1Code}`,
-        team_2_flag: `https://countryflagsapi.com/png/${team2Code}`,
-        match_time: match.utcDate,
+        team_1_flag: team1Flag,
+        team_2_flag: team2Flag,
+        match_date: matchDate,
+        match_time: matchTime,
         venue: match.venue || "TBD",
+        status: "Upcoming",
+        youtube_url: null,
       };
     });
 
     res.json(results);
   } catch (err) {
-    console.error("Upcoming match fetch error:", err.message);
+    console.error("Upcoming football match fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
