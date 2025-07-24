@@ -1,9 +1,6 @@
 const axios = require('axios');
 require('dotenv').config();
-const countries = require('i18n-iso-countries');
-
-// Register English locale for country name lookup
-countries.registerLocale(require('i18n-iso-countries/langs/en.json'))
+const countries = require('country-list');
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
   try {
@@ -71,6 +68,8 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
+
+
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
@@ -82,21 +81,21 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       },
     });
 
-    const matches = response.data.matches.slice(0, 10);
+    const matches = response.data.matches;
 
-    const results = matches.map((match) => {
+    const results = matches.slice(0, 10).map((match) => {
       const homeTeam = match.homeTeam;
       const awayTeam = match.awayTeam;
 
       const team1 = homeTeam.name || "Team 1";
       const team2 = awayTeam.name || "Team 2";
 
-      // ✅ Get country from match.competition.area (backup if team.area missing)
-      const homeCountry = homeTeam.area?.name || match.competition.area?.name || "Brazil";
-      const awayCountry = awayTeam.area?.name || match.competition.area?.name || "Brazil";
+      // Try to get country from match area or default to "Unknown"
+      const homeCountry = homeTeam?.area?.name || match.competition?.area?.name || "Unknown";
+      const awayCountry = awayTeam?.area?.name || match.competition?.area?.name || "Unknown";
 
-      const team1Code = countries.getAlpha2Code(homeCountry, 'en')?.toLowerCase() || 'br';
-      const team2Code = countries.getAlpha2Code(awayCountry, 'en')?.toLowerCase() || 'br';
+      const team1Code = countries.getCode(homeCountry) ? countries.getCode(homeCountry).toLowerCase() : 'unknown';
+      const team2Code = countries.getCode(awayCountry) ? countries.getCode(awayCountry).toLowerCase() : 'unknown';
 
       const team1Flag = `https://flagcdn.com/w320/${team1Code}.png`;
       const team2Flag = `https://flagcdn.com/w320/${team2Code}.png`;
@@ -126,3 +125,4 @@ exports.getUpcomingFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
+
