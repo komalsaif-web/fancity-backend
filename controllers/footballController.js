@@ -68,7 +68,21 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-// ✅ UPCOMING FOOTBALL MATCHES (with flags)
+// Static mapping of club names to their country for correct flag display
+const teamToCountry = {
+  "EC Juventude": "brazil",
+  "São Paulo FC": "brazil",
+  "Chelsea FC": "england",
+  "Manchester United FC": "england",
+  "FC Barcelona": "spain",
+  "Real Madrid CF": "spain",
+  "Bayern Munich": "germany",
+  "Juventus FC": "italy",
+  "Paris Saint-Germain": "france",
+  "Ajax": "netherlands",
+  // Add more as needed
+};
+
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
@@ -90,12 +104,11 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const team1 = homeTeam.name || "Team 1";
       const team2 = awayTeam.name || "Team 2";
 
-      // Attempt to get flags using country name or fallback
-      const homeCountry = homeTeam.area?.name || team1;
-      const awayCountry = awayTeam.area?.name || team2;
+      const team1Country = teamToCountry[team1] || match.competition.area?.name?.toLowerCase() || "unknown";
+      const team2Country = teamToCountry[team2] || match.competition.area?.name?.toLowerCase() || "unknown";
 
-      const team1Flag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
-      const team2Flag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+      const team1Flag = `https://countryflagsapi.com/png/${encodeURIComponent(team1Country)}`;
+      const team2Flag = `https://countryflagsapi.com/png/${encodeURIComponent(team2Country)}`;
 
       const dateObj = new Date(match.utcDate);
       const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -122,3 +135,4 @@ exports.getUpcomingFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
+
