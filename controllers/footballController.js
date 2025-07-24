@@ -71,7 +71,6 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
@@ -92,12 +91,12 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const team1 = homeTeam.name || "Team 1";
       const team2 = awayTeam.name || "Team 2";
 
-      const homeCountryName = homeTeam.area?.name || "Brazil";
-      const awayCountryName = awayTeam.area?.name || "Brazil";
+      // ✅ Get country from match.competition.area (backup if team.area missing)
+      const homeCountry = homeTeam.area?.name || match.competition.area?.name || "Brazil";
+      const awayCountry = awayTeam.area?.name || match.competition.area?.name || "Brazil";
 
-      // ✅ Get ISO Alpha-2 codes for flag URLs
-      const team1Code = countries.getAlpha2Code(homeCountryName, 'en')?.toLowerCase() || 'br';
-      const team2Code = countries.getAlpha2Code(awayCountryName, 'en')?.toLowerCase() || 'br';
+      const team1Code = countries.getAlpha2Code(homeCountry, 'en')?.toLowerCase() || 'br';
+      const team2Code = countries.getAlpha2Code(awayCountry, 'en')?.toLowerCase() || 'br';
 
       const team1Flag = `https://flagcdn.com/w320/${team1Code}.png`;
       const team2Flag = `https://flagcdn.com/w320/${team2Code}.png`;
