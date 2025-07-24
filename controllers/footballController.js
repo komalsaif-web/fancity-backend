@@ -67,6 +67,24 @@ exports.getLiveFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch football matches" });
   }
 };
+// ✅ Simple team-to-country code map
+const teamCountryMap = {
+  "EC Vitória": "BR",
+  "SC Recife": "BR",
+  "São Paulo FC": "BR",
+  "CR Flamengo": "BR",
+  "RB Bragantino": "BR",
+  "Grêmio FBPA": "BR",
+  "CR Vasco da Gama": "BR",
+  "EC Bahia": "BR",
+  "CA Mineiro": "BR",
+  "Fortaleza EC": "BR",
+  "Chelsea FC": "GB",
+  "FC Barcelona": "ES",
+  "Real Madrid CF": "ES",
+  "Paris Saint-Germain FC": "FR",
+  "FC Bayern München": "DE"
+};
 
 // ✅ UPCOMING FOOTBALL MATCHES (with flags)
 exports.getUpcomingFootballMatches = async (req, res) => {
@@ -77,31 +95,26 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       },
       params: {
         status: 'SCHEDULED',
-        limit: 10,
+        limit: 15,
       },
     });
 
     const matches = response.data.matches;
 
     const results = matches.map((match) => {
-      const homeTeam = match.homeTeam;
-      const awayTeam = match.awayTeam;
+      const team1 = match.homeTeam.name;
+      const team2 = match.awayTeam.name;
 
-      // Safely extract country info if available
-      const homeCountry = homeTeam.area?.name || "Unknown";
-      const awayCountry = awayTeam.area?.name || "Unknown";
-
-      // Convert country name to lowercase and encode for URL
-      const homeFlag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
-      const awayFlag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+      const team1Code = teamCountryMap[team1] || "unknown";
+      const team2Code = teamCountryMap[team2] || "unknown";
 
       return {
         sport: "football",
         competition: match.competition.name,
-        team_1: homeTeam.name,
-        team_2: awayTeam.name,
-        team_1_flag: homeFlag,
-        team_2_flag: awayFlag,
+        team_1: team1,
+        team_2: team2,
+        team_1_flag: `https://countryflagsapi.com/png/${team1Code}`,
+        team_2_flag: `https://countryflagsapi.com/png/${team2Code}`,
         match_time: match.utcDate,
         venue: match.venue || "TBD",
       };
@@ -113,3 +126,4 @@ exports.getUpcomingFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
+
