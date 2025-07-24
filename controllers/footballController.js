@@ -3,9 +3,7 @@ require('dotenv').config();
 const countries = require('i18n-iso-countries');
 
 // Register English locale for country name lookup
-countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
-
-const countryNameToCode = require('../utils/countryCodeMapper');
+countries.registerLocale(require('i18n-iso-countries/langs/en.json'))
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
   try {
