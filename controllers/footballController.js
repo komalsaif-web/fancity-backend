@@ -68,29 +68,44 @@ exports.getLiveFootballMatches = async (req, res) => {
   }
 };
 
-// ✅ UPCOMING FOOTBALL MATCHES (from football-data.org)
+// ✅ UPCOMING FOOTBALL MATCHES (with flags)
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
       headers: {
-        'X-Auth-Token': process.env.FOOTBALLDATA_API_KEY, // make sure to set this key in .env
+        'X-Auth-Token': process.env.FOOTBALLDATA_API_KEY,
       },
       params: {
-        status: 'SCHEDULED', // fetch only scheduled (upcoming) matches
-        limit: 10, // limit results
+        status: 'SCHEDULED',
+        limit: 10,
       },
     });
 
     const matches = response.data.matches;
 
-    const results = matches.map((match) => ({
-      sport: "football",
-      competition: match.competition.name,
-      team_1: match.homeTeam.name,
-      team_2: match.awayTeam.name,
-      match_time: match.utcDate,
-      venue: match.venue || "TBD",
-    }));
+    const results = matches.map((match) => {
+      const homeTeam = match.homeTeam;
+      const awayTeam = match.awayTeam;
+
+      // Safely extract country info if available
+      const homeCountry = homeTeam.area?.name || "Unknown";
+      const awayCountry = awayTeam.area?.name || "Unknown";
+
+      // Convert country name to lowercase and encode for URL
+      const homeFlag = `https://countryflagsapi.com/png/${encodeURIComponent(homeCountry.toLowerCase())}`;
+      const awayFlag = `https://countryflagsapi.com/png/${encodeURIComponent(awayCountry.toLowerCase())}`;
+
+      return {
+        sport: "football",
+        competition: match.competition.name,
+        team_1: homeTeam.name,
+        team_2: awayTeam.name,
+        team_1_flag: homeFlag,
+        team_2_flag: awayFlag,
+        match_time: match.utcDate,
+        venue: match.venue || "TBD",
+      };
+    });
 
     res.json(results);
   } catch (err) {
