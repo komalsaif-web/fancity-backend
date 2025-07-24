@@ -1,20 +1,6 @@
 const axios = require('axios');
 require('dotenv').config();
-// Static mapping of club names to their country for correct flag display
-const teamToCountry = {
-  "EC Juventude": "brazil",
-  "São Paulo FC": "brazil",
-  "Chelsea FC": "england",
-  "Manchester United FC": "england",
-  "FC Barcelona": "spain",
-  "Real Madrid CF": "spain",
-  "Bayern Munich": "germany",
-  "Juventus FC": "italy",
-  "Paris Saint-Germain": "france",
-  "Ajax": "netherlands",
-  // Add more as needed
-};
-
+const countryNameToCode = require('../utils/countryCodeMapper');
 // ✅ LIVE FOOTBALL MATCHES
 exports.getLiveFootballMatches = async (req, res) => {
   try {
@@ -83,6 +69,9 @@ exports.getLiveFootballMatches = async (req, res) => {
 };
 
 
+// Optional: Helper to convert country name to ISO 3166-1 alpha-2 code
+ // You can create this file
+
 exports.getUpcomingFootballMatches = async (req, res) => {
   try {
     const response = await axios.get('https://api.football-data.org/v4/matches', {
@@ -104,11 +93,11 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const team1 = homeTeam.name || "Team 1";
       const team2 = awayTeam.name || "Team 2";
 
-      const team1Country = teamToCountry[team1] || match.competition.area?.name?.toLowerCase() || "unknown";
-      const team2Country = teamToCountry[team2] || match.competition.area?.name?.toLowerCase() || "unknown";
+      const team1CountryCode = countryNameToCode(homeTeam.area?.name || team1);
+      const team2CountryCode = countryNameToCode(awayTeam.area?.name || team2);
 
-      const team1Flag = `https://countryflagsapi.com/png/${encodeURIComponent(team1Country)}`;
-      const team2Flag = `https://countryflagsapi.com/png/${encodeURIComponent(team2Country)}`;
+      const team1Flag = `https://flagcdn.com/w320/${team1CountryCode}.png`;
+      const team2Flag = `https://flagcdn.com/w320/${team2CountryCode}.png`;
 
       const dateObj = new Date(match.utcDate);
       const matchDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -123,7 +112,7 @@ exports.getUpcomingFootballMatches = async (req, res) => {
         team_2_flag: team2Flag,
         match_date: matchDate,
         match_time: matchTime,
-        venue: match.venue || "TBD",
+        venue: match?.competition?.area?.name || "TBD", // Using country name as fallback
         status: "Upcoming",
         youtube_url: null,
       };
@@ -135,4 +124,3 @@ exports.getUpcomingFootballMatches = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch upcoming football matches" });
   }
 };
-
