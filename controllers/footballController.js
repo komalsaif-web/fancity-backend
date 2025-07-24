@@ -80,11 +80,10 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       },
       params: {
         status: 'SCHEDULED',
-        limit: 10,
       },
     });
 
-    const matches = response.data.matches;
+    const matches = response.data.matches.slice(0, 10);
 
     const results = matches.map((match) => {
       const homeTeam = match.homeTeam;
@@ -96,7 +95,7 @@ exports.getUpcomingFootballMatches = async (req, res) => {
       const homeCountryName = homeTeam.area?.name || "Brazil";
       const awayCountryName = awayTeam.area?.name || "Brazil";
 
-      // Convert country name to ISO 3166-1 alpha-2 code
+      // ✅ Get ISO Alpha-2 codes for flag URLs
       const team1Code = countries.getAlpha2Code(homeCountryName, 'en')?.toLowerCase() || 'br';
       const team2Code = countries.getAlpha2Code(awayCountryName, 'en')?.toLowerCase() || 'br';
 
@@ -116,7 +115,7 @@ exports.getUpcomingFootballMatches = async (req, res) => {
         team_2_flag: team2Flag,
         match_date: matchDate,
         match_time: matchTime,
-        venue: match?.competition?.area?.name || "TBD",
+        venue: match.venue || "TBD",
         status: "Upcoming",
         youtube_url: null,
       };
