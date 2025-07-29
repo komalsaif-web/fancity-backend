@@ -433,11 +433,22 @@ const getContinueVideo = async (req, res) => {
 
   try {
     const video = await getContinueVideoByUserId(id);
-    res.status(200).json({ continue_video: video });
+
+    if (!video) {
+      return res.status(404).json({ message: 'No continue watching video found' });
+    }
+
+    res.status(200).json({
+      continue_watching: {
+        video_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch continue video', error: err.message });
   }
 };
+
 
 module.exports = {
   signup,
