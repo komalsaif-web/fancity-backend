@@ -355,10 +355,11 @@ const addSavedVideo = async (req, res) => {
 
   try {
     const user = await getUserById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
     const currentVideos = user.saved_videos || [];
 
-    // Save as object with url
-    const updatedVideos = [...currentVideos, { url: videoUrl }];
+    const updatedVideos = [...currentVideos, videoUrl];
     await updateSavedVideos(id, updatedVideos);
 
     res.status(200).json({ message: 'Video added to saved list', saved_videos: updatedVideos });
