@@ -349,54 +349,69 @@ const deleteAllUsersController = async (req, res) => {
 // 🔹 Add to saved videos (using only video URL)
 const addSavedVideo = async (req, res) => {
   const { id } = req.params;
-  const { videoUrl } = req.body;
+  const { video_url, thumbnail_url } = req.body;
 
-  if (!videoUrl) return res.status(400).json({ message: 'Video URL is required' });
+  if (!video_url || !thumbnail_url) {
+    return res.status(400).json({ message: 'Video URL and Thumbnail URL are required' });
+  }
 
   try {
     const user = await getUserById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const currentVideos = user.saved_videos || [];
+    const currentVideos = await getSavedVideosByUserId(id); // from DB
+    const updatedVideos = [...currentVideos, { video_url, thumbnail_url }];
 
-    const updatedVideos = [...currentVideos, videoUrl];
-    await updateSavedVideos(id, updatedVideos);
+    await updateSavedVideos(id, JSON.stringify(updatedVideos)); // 💡 cast to JSON string
 
-    res.status(200).json({ message: 'Video added to saved list', saved_videos: updatedVideos });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to save video', error: err.message });
+    res.status(200).json({
+      message: 'Video added successfully',
+      saved_videos: updatedVideos,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to save video', error: error.message });
   }
 };
 
 
 // 🔹 Delete saved video by video_id
 const deleteSavedVideo = async (req, res) => {
-  const { id, videoId } = req.params;
+  const { id, videoUrl } = req.params;
 
   try {
     const user = await getUserById(id);
-    const currentVideos = user.saved_videos || [];
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const updatedVideos = currentVideos.filter(v => v.video_id !== videoId);
-    await updateSavedVideos(id, updatedVideos);
+    const currentVideos = await getSavedVideosByUserId(id);
+
+    const updatedVideos = currentVideos.filter(
+      (v) => v.video_url !== videoUrl
+    );
+
+    await updateSavedVideos(id, JSON.stringify(updatedVideos));
 
     res.status(200).json({ message: 'Video removed', saved_videos: updatedVideos });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to delete video', error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete video', error: error.message });
   }
 };
+
 
 // 🔹 Get saved videos
 const getSavedVideos = async (req, res) => {
   const { id } = req.params;
 
   try {
+    const user = await getUserById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
     const videos = await getSavedVideosByUserId(id);
     res.status(200).json({ saved_videos: videos });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch saved videos', error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch saved videos', error: error.message });
   }
 };
+
 
 // 🔹 Set continue watching
 const setContinueVideo = async (req, res) => {

@@ -110,6 +110,7 @@ const updateSavedVideos = async (userId, videos) => {
   return result.rowCount > 0;
 };
 
+
 // 🔹 Update continue_video
 const updateContinueVideo = async (userId, video) => {
   const result = await pool.query(
