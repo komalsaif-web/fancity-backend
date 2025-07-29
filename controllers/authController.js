@@ -346,18 +346,19 @@ const deleteAllUsersController = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete all users', error: error.message });
   }
 };
-// 🔹 Add to saved videos
+// 🔹 Add to saved videos (using only video URL)
 const addSavedVideo = async (req, res) => {
   const { id } = req.params;
-  const { video } = req.body;
+  const { videoUrl } = req.body;
 
-  if (!video) return res.status(400).json({ message: 'Video is required' });
+  if (!videoUrl) return res.status(400).json({ message: 'Video URL is required' });
 
   try {
     const user = await getUserById(id);
     const currentVideos = user.saved_videos || [];
 
-    const updatedVideos = [...currentVideos, video];
+    // Save as object with url
+    const updatedVideos = [...currentVideos, { url: videoUrl }];
     await updateSavedVideos(id, updatedVideos);
 
     res.status(200).json({ message: 'Video added to saved list', saved_videos: updatedVideos });
@@ -365,6 +366,7 @@ const addSavedVideo = async (req, res) => {
     res.status(500).json({ message: 'Failed to save video', error: err.message });
   }
 };
+
 
 // 🔹 Delete saved video by video_id
 const deleteSavedVideo = async (req, res) => {
