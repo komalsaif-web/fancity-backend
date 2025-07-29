@@ -16,7 +16,11 @@ const {
   deleteUserById,
   getUserByEmail,
   getAllUsers,
-  deleteAllUsers
+  deleteAllUsers,
+  updateSavedVideos,
+  updateContinueVideo,
+  getSavedVideosByUserId,
+  getContinueVideoByUserId,
 } = require('../models/userModel');
 
 // 📧 Send OTP via email
@@ -342,6 +346,81 @@ const deleteAllUsersController = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete all users', error: error.message });
   }
 };
+// 🔹 Add to saved videos
+const addSavedVideo = async (req, res) => {
+  const { id } = req.params;
+  const { video } = req.body;
+
+  if (!video) return res.status(400).json({ message: 'Video is required' });
+
+  try {
+    const user = await getUserById(id);
+    const currentVideos = user.saved_videos || [];
+
+    const updatedVideos = [...currentVideos, video];
+    await updateSavedVideos(id, updatedVideos);
+
+    res.status(200).json({ message: 'Video added to saved list', saved_videos: updatedVideos });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to save video', error: err.message });
+  }
+};
+
+// 🔹 Delete saved video by video_id
+const deleteSavedVideo = async (req, res) => {
+  const { id, videoId } = req.params;
+
+  try {
+    const user = await getUserById(id);
+    const currentVideos = user.saved_videos || [];
+
+    const updatedVideos = currentVideos.filter(v => v.video_id !== videoId);
+    await updateSavedVideos(id, updatedVideos);
+
+    res.status(200).json({ message: 'Video removed', saved_videos: updatedVideos });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete video', error: err.message });
+  }
+};
+
+// 🔹 Get saved videos
+const getSavedVideos = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const videos = await getSavedVideosByUserId(id);
+    res.status(200).json({ saved_videos: videos });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch saved videos', error: err.message });
+  }
+};
+
+// 🔹 Set continue watching
+const setContinueVideo = async (req, res) => {
+  const { id } = req.params;
+  const { video } = req.body;
+
+  if (!video) return res.status(400).json({ message: 'Video is required' });
+
+  try {
+    await updateContinueVideo(id, video);
+    res.status(200).json({ message: 'Continue video set', continue_video: video });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to set continue video', error: err.message });
+  }
+};
+
+const getContinueVideo = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const video = await getContinueVideoByUserId(id);
+    res.status(200).json({ continue_video: video });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch continue video', error: err.message });
+  }
+};
+
 module.exports = {
   signup,
   resendOtp,
@@ -355,5 +434,10 @@ module.exports = {
   deleteUserAccount,
   getUserByEmailController,
   getAllUsersController,
-  deleteAllUsersController
+  deleteAllUsersController,
+    addSavedVideo,
+  deleteSavedVideo,
+  getSavedVideos,
+  setContinueVideo,
+  getContinueVideo,
 };

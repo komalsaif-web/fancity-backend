@@ -101,6 +101,41 @@ const getAllUsers = async () => {
 const deleteAllUsers = async () => {
   return await pool.query('DELETE FROM fancity_users');
 };
+// 🔹 Update saved_videos
+const updateSavedVideos = async (userId, videos) => {
+  const result = await pool.query(
+    'UPDATE fancity_users SET saved_videos = $1 WHERE id = $2',
+    [videos, userId]
+  );
+  return result.rowCount > 0;
+};
+
+// 🔹 Update continue_video
+const updateContinueVideo = async (userId, video) => {
+  const result = await pool.query(
+    'UPDATE fancity_users SET continue_video = $1 WHERE id = $2',
+    [video, userId]
+  );
+  return result.rowCount > 0;
+};
+
+// 🔹 Get saved_videos
+const getSavedVideosByUserId = async (userId) => {
+  const result = await pool.query(
+    'SELECT saved_videos FROM fancity_users WHERE id = $1',
+    [userId]
+  );
+  return result.rows[0]?.saved_videos || [];
+};
+
+// 🔹 Get continue_video
+const getContinueVideoByUserId = async (userId) => {
+  const result = await pool.query(
+    'SELECT continue_video FROM fancity_users WHERE id = $1',
+    [userId]
+  );
+  return result.rows[0]?.continue_video || null;
+};
 
 // ✅ Export all
 module.exports = {
@@ -117,4 +152,8 @@ module.exports = {
   getUserById,
   deleteUserById,
   deleteAllUsers,
+   updateSavedVideos,
+  updateContinueVideo,
+  getSavedVideosByUserId,
+  getContinueVideoByUserId,
 };

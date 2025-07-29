@@ -13,7 +13,12 @@ const {
   sendOtp,
   getUserByEmailController,
   getAllUsersController,
-  deleteAllUsersController
+  deleteAllUsersController,
+  addSavedVideo,
+  deleteSavedVideo,
+  getSavedVideos,
+  setContinueVideo,
+  getContinueVideo
 } = require('../controllers/authController');
 
 router.post('/signup', signup);
@@ -29,5 +34,13 @@ router.post('/resend-otp', resendOtp);
 router.get('/email/:email', getUserByEmailController);
 router.get('/all-users', getAllUsersController);
 router.delete('/delete-all-users', deleteAllUsersController); 
+// ✅ Saved Videos
+router.post('/:id/save-video', addSavedVideo);
+router.delete('/:id/save-video/:videoId', deleteSavedVideo);
+router.get('/:id/saved-videos', getSavedVideos);
+
+// ✅ Continue Watching
+router.post('/:id/continue-video', setContinueVideo);
+router.get('/:id/continue-video', getContinueVideo);
 module.exports = router;
  
