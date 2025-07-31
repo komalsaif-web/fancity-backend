@@ -21,6 +21,7 @@ const {
   updateContinueVideo,
   getSavedVideosByUserId,
   getContinueVideoByUserId,
+  updateUserVerification,
 } = require('../models/userModel');
 
 // 📧 Send OTP via email
@@ -34,7 +35,7 @@ const sendOtpEmail = async (email, otp) => {
   });
 
   await transporter.sendMail({
-    from: `"PHARMASENZ" <${process.env.EMAIL_USER}>`,
+    from: `"FANCITY" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Your OTP Code',
     text: `Your OTP is ${otp}. It will expire in 1 minute.`,
@@ -56,7 +57,7 @@ const signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await createUser(name, email, phone || null, hashedPassword); // ✅ default to null if not provided
+    const user = await createUser(name, email, phone || null, hashedPassword); 
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const encryptedToken = CryptoJS.AES.encrypt(token, process.env.ENCRYPTION_SECRET).toString();
@@ -450,6 +451,26 @@ const getContinueVideo = async (req, res) => {
 };
 
 
+const manuallyVerifyUser = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) return res.status(400).json({ message: 'User ID is required' });
+
+    const success = await updateUserVerification(id);
+
+    if (!success) {
+      return res.status(404).json({ message: 'User not found or already verified' });
+    }
+
+    res.status(200).json({ message: 'User marked as verified successfully' });
+  } catch (error) {
+    console.error('Manual Verify Error:', error.message);
+    res.status(500).json({ message: 'Failed to verify user manually', error: error.message });
+  }
+};
+
+
 module.exports = {
   signup,
   resendOtp,
@@ -469,4 +490,5 @@ module.exports = {
   getSavedVideos,
   setContinueVideo,
   getContinueVideo,
+  manuallyVerifyUser,
 };

@@ -137,6 +137,13 @@ const getContinueVideoByUserId = async (userId) => {
   );
   return result.rows[0]?.continue_video || null;
 };
+const updateUserVerification = async (userId) => {
+  const result = await pool.query(
+    'UPDATE fancity_users SET is_verified = true WHERE id = $1',
+    [userId]
+  );
+  return result.rowCount > 0;
+};
 
 // ✅ Export all
 module.exports = {
@@ -157,4 +164,5 @@ module.exports = {
   updateContinueVideo,
   getSavedVideosByUserId,
   getContinueVideoByUserId,
+  updateUserVerification,
 };
