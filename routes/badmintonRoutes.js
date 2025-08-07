@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getLiveMatches,
+  getPastMatches,
   getUpcomingMatches,
-  getPastMatches
+  getLiveMatch,
 } = require('../controllers/badmintonController');
 
-router.get('/live', getLiveMatches);
-router.get('/upcoming', getUpcomingMatches);
 router.get('/past', getPastMatches);
+router.get('/upcoming', getUpcomingMatches);
+router.get('/live', getLiveMatch);
 
 module.exports = router;

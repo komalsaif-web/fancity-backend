@@ -1,98 +1,56 @@
 const axios = require('axios');
 
-const API_KEY = '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';
-const BASE_URL = 'https://api-football-v1.p.rapidapi.com/v3/fixtures';
-const HEADERS = {
-  'X-RapidAPI-Key': API_KEY,
-  'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com'
-};
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Delay utility for live matches (2 mins)
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// 🟢 LIVE MATCHES
-const getLiveMatches = async (req, res) => {
-  try {
-    await delay(120000); // 2 minutes delay
-    const response = await axios.get(`${BASE_URL}?live=all`, { headers: HEADERS });
-
-    const liveMatches = response.data.response.map(match => ({
-      league: match.league.name,
-      country: match.league.country,
-      date: match.fixture.date,
-      status: match.fixture.status.long,
-      homeTeam: {
-        name: match.teams.home.name,
-        logo: match.teams.home.logo,
-        score: match.goals.home
+async function askGroq(prompt) {
+  const res = await axios.post(
+    GROQ_API_URL,
+    {
+      model: 'llama3-70b-8192',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      awayTeam: {
-        name: match.teams.away.name,
-        logo: match.teams.away.logo,
-        score: match.goals.away
-      }
-    }));
+    }
+  );
+  return res.data.choices[0].message.content;
+}
 
-    res.status(200).json({ liveMatches });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch live matches' });
+exports.getPastMatches = async (req, res) => {
+  try {
+    const prompt = `Give me the last 5 international hockey match results in the format: { teams, score, date }. Just provide plain JSON array.`;
+    const result = await askGroq(prompt);
+    res.send(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch past matches', details: err.message });
   }
 };
 
-// 🟡 UPCOMING MATCHES (next 5)
-const getUpcomingMatches = async (req, res) => {
+exports.getUpcomingMatches = async (req, res) => {
   try {
-    const response = await axios.get(`${BASE_URL}?next=5`, { headers: HEADERS });
-
-    const upcoming = response.data.response.map(match => ({
-      league: match.league.name,
-      country: match.league.country,
-      date: match.fixture.date,
-      homeTeam: {
-        name: match.teams.home.name,
-        logo: match.teams.home.logo
-      },
-      awayTeam: {
-        name: match.teams.away.name,
-        logo: match.teams.away.logo
-      }
-    }));
-
-    res.status(200).json({ upcomingMatches: upcoming });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch upcoming matches' });
+    const prompt = `Give me the next 5 upcoming international hockey matches in JSON format: { teams, date }.`;
+    const result = await askGroq(prompt);
+    res.send(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch upcoming matches', details: err.message });
   }
 };
 
-// 🔴 PAST MATCHES (last 5)
-const getPastMatches = async (req, res) => {
+let cachedLive = null;
+
+exports.getLiveMatch = async (req, res) => {
   try {
-    const response = await axios.get(`${BASE_URL}?last=5`, { headers: HEADERS });
-
-    const past = response.data.response.map(match => ({
-      league: match.league.name,
-      country: match.league.country,
-      date: match.fixture.date,
-      homeTeam: {
-        name: match.teams.home.name,
-        logo: match.teams.home.logo,
-        score: match.goals.home
-      },
-      awayTeam: {
-        name: match.teams.away.name,
-        logo: match.teams.away.logo,
-        score: match.goals.away
-      }
-    }));
-
-    res.status(200).json({ pastMatches: past });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch past matches' });
+    if (!cachedLive || Date.now() - cachedLive.time > 5 * 60 * 1000) {
+      const prompt = `Give me one fake but realistic live international hockey match status like { teams, score, time, status }.`;
+      const result = await askGroq(prompt);
+      cachedLive = { data: result, time: Date.now() };
+    }
+    res.send(cachedLive.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch live match', details: err.message });
   }
-};
-
-module.exports = {
-  getLiveMatches,
-  getUpcomingMatches,
-  getPastMatches
 };
