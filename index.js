@@ -13,10 +13,11 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-const cricketRoutes = require('./routes/cricketRoutes');
 const authRoute = require('./routes/authRoutes');
-app.use('/api', cricketRoutes);
+const badmintonRoutes = require('./routes/badmintonRoutes');
+
 app.use('/api', authRoute);
+app.use('/api', badmintonRoutes);
 
 
 
