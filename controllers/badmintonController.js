@@ -16,6 +16,7 @@ const fetchBadmintonData = async (req, res) => {
       const matchTime = $(el).find('.event__time').text().trim();
       const homePlayer = $(el).find('.event__participant--home').text().trim();
       const awayPlayer = $(el).find('.event__participant--away').text().trim();
+      const score = $(el).find('.event__scores').text().trim(); // optional
 
       let statusType = 'upcoming';
       if (matchStatus.includes('FT') || matchStatus.includes('Finished')) {
@@ -26,10 +27,14 @@ const fetchBadmintonData = async (req, res) => {
 
       if (type === statusType) {
         matches.push({
-          homePlayer,
-          awayPlayer,
-          matchTime,
-          status: statusType,
+          team1: homePlayer,
+          team2: awayPlayer,
+          team3: null, // For now, set to null (or add mixed if needed)
+          score: score || null,
+          date: matchTime || null,
+          team1_country: 'us', // You can try mapping country codes later
+          team2_country: 'us',
+          team3_country: null
         });
       }
     });
