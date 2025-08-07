@@ -1,47 +1,98 @@
-
 const axios = require('axios');
-const API_KEY = 'ds97BaJKOeSpS2grjXoyqIwAhbLelwbj6BtWr0or';
-const BASE_URL = 'https://api.sportradar.com/badminton/trial/v1/en';
 
-function getFormattedDate(offsetDays = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-}
+const API_KEY = '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';
+const BASE_URL = 'https://api-football-v1.p.rapidapi.com/v3/fixtures';
+const HEADERS = {
+  'X-RapidAPI-Key': API_KEY,
+  'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com'
+};
 
-// Live matches (Today’s date)
-exports.getLiveMatches = async (req, res) => {
+// Delay utility for live matches (2 mins)
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 🟢 LIVE MATCHES
+const getLiveMatches = async (req, res) => {
   try {
-    const today = getFormattedDate();
-    const response = await axios.get(`${BASE_URL}/schedules/${today}/schedule.json?api_key=${API_KEY}`);
-    const matches = response.data.sport_events || [];
-    const liveMatches = matches.filter(match => match.status && match.status.match_status === 'live');
-    res.json(liveMatches);
+    await delay(120000); // 2 minutes delay
+    const response = await axios.get(`${BASE_URL}?live=all`, { headers: HEADERS });
+
+    const liveMatches = response.data.response.map(match => ({
+      league: match.league.name,
+      country: match.league.country,
+      date: match.fixture.date,
+      status: match.fixture.status.long,
+      homeTeam: {
+        name: match.teams.home.name,
+        logo: match.teams.home.logo,
+        score: match.goals.home
+      },
+      awayTeam: {
+        name: match.teams.away.name,
+        logo: match.teams.away.logo,
+        score: match.goals.away
+      }
+    }));
+
+    res.status(200).json({ liveMatches });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching live matches', error: error.message });
+    res.status(500).json({ error: 'Failed to fetch live matches' });
   }
 };
 
-// Upcoming matches (Tomorrow’s date)
-exports.getUpcomingMatches = async (req, res) => {
+// 🟡 UPCOMING MATCHES (next 5)
+const getUpcomingMatches = async (req, res) => {
   try {
-    const tomorrow = getFormattedDate(1);
-    const response = await axios.get(`${BASE_URL}/schedules/${tomorrow}/schedule.json?api_key=${API_KEY}`);
-    const matches = response.data.sport_events || [];
-    res.json(matches);
+    const response = await axios.get(`${BASE_URL}?next=5`, { headers: HEADERS });
+
+    const upcoming = response.data.response.map(match => ({
+      league: match.league.name,
+      country: match.league.country,
+      date: match.fixture.date,
+      homeTeam: {
+        name: match.teams.home.name,
+        logo: match.teams.home.logo
+      },
+      awayTeam: {
+        name: match.teams.away.name,
+        logo: match.teams.away.logo
+      }
+    }));
+
+    res.status(200).json({ upcomingMatches: upcoming });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching upcoming matches', error: error.message });
+    res.status(500).json({ error: 'Failed to fetch upcoming matches' });
   }
 };
 
-// Past matches (Yesterday’s date)
-exports.getPastMatches = async (req, res) => {
+// 🔴 PAST MATCHES (last 5)
+const getPastMatches = async (req, res) => {
   try {
-    const yesterday = getFormattedDate(-1);
-    const response = await axios.get(`${BASE_URL}/schedules/${yesterday}/schedule.json?api_key=${API_KEY}`);
-    const matches = response.data.sport_events || [];
-    res.json(matches);
+    const response = await axios.get(`${BASE_URL}?last=5`, { headers: HEADERS });
+
+    const past = response.data.response.map(match => ({
+      league: match.league.name,
+      country: match.league.country,
+      date: match.fixture.date,
+      homeTeam: {
+        name: match.teams.home.name,
+        logo: match.teams.home.logo,
+        score: match.goals.home
+      },
+      awayTeam: {
+        name: match.teams.away.name,
+        logo: match.teams.away.logo,
+        score: match.goals.away
+      }
+    }));
+
+    res.status(200).json({ pastMatches: past });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching past matches', error: error.message });
+    res.status(500).json({ error: 'Failed to fetch past matches' });
   }
+};
+
+module.exports = {
+  getLiveMatches,
+  getUpcomingMatches,
+  getPastMatches
 };
