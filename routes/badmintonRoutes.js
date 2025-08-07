@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { fetchBadmintonData } = require('../controllers/badmintonController');
+const badmintonController = require('../controllers/badmintonController');
 
-// Endpoint: /api/badminton?type=live | past | upcoming
-router.get('/badminton', fetchBadmintonData);
+router.get('/live', badmintonController.getLiveMatches);
+router.get('/upcoming', badmintonController.getUpcomingMatches);
+router.get('/past', badmintonController.getPastMatches);
 
 module.exports = router;

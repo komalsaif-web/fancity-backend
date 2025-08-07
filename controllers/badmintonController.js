@@ -1,54 +1,47 @@
-const puppeteer = require('puppeteer');
 
-const fetchBadmintonData = async (req, res) => {
+const axios = require('axios');
+const API_KEY = 'ds97BaJKOeSpS2grjXoyqIwAhbLelwbj6BtWr0or';
+const BASE_URL = 'https://api.sportradar.com/badminton/trial/v1/en';
+
+function getFormattedDate(offsetDays = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+}
+
+// Live matches (Today’s date)
+exports.getLiveMatches = async (req, res) => {
   try {
-    const { type } = req.query; // 'live', 'past', or 'upcoming'
-    const url = 'https://www.flashscore.com/badminton/';
-
-    const browser = await puppeteer.launch({ headless: 'new' });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-    await page.waitForSelector('.event__match');
-
-    const matches = await page.$$eval('.event__match', (elements, type) => {
-      return elements.map(el => {
-        const homePlayer = el.querySelector('.event__participant--home')?.textContent.trim();
-        const awayPlayer = el.querySelector('.event__participant--away')?.textContent.trim();
-        const matchTime = el.querySelector('.event__time')?.textContent.trim();
-        const score = el.querySelector('.event__scores')?.textContent.trim() || '';
-        const statusText = el.querySelector('.event__stage--block')?.textContent.trim() || '';
-
-        let statusType = 'upcoming';
-        if (statusText.includes('FT') || statusText.includes('Finished')) {
-          statusType = 'past';
-        } else if (statusText) {
-          statusType = 'live';
-        }
-
-        if (type === statusType) {
-          return {
-            team1: homePlayer,
-            team2: awayPlayer,
-            team3: null,
-            score: score || null,
-            date: matchTime || null,
-            team1_country: 'us',
-            team2_country: 'us',
-            team3_country: null
-          };
-        }
-        return null;
-      }).filter(Boolean);
-    }, type);
-
-    await browser.close();
-
-    res.json({ success: true, count: matches.length, matches });
+    const today = getFormattedDate();
+    const response = await axios.get(`${BASE_URL}/schedules/${today}/schedule.json?api_key=${API_KEY}`);
+    const matches = response.data.sport_events || [];
+    const liveMatches = matches.filter(match => match.status && match.status.match_status === 'live');
+    res.json(liveMatches);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Scraping failed' });
+    res.status(500).json({ message: 'Error fetching live matches', error: error.message });
   }
 };
 
-module.exports = { fetchBadmintonData };
+// Upcoming matches (Tomorrow’s date)
+exports.getUpcomingMatches = async (req, res) => {
+  try {
+    const tomorrow = getFormattedDate(1);
+    const response = await axios.get(`${BASE_URL}/schedules/${tomorrow}/schedule.json?api_key=${API_KEY}`);
+    const matches = response.data.sport_events || [];
+    res.json(matches);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching upcoming matches', error: error.message });
+  }
+};
+
+// Past matches (Yesterday’s date)
+exports.getPastMatches = async (req, res) => {
+  try {
+    const yesterday = getFormattedDate(-1);
+    const response = await axios.get(`${BASE_URL}/schedules/${yesterday}/schedule.json?api_key=${API_KEY}`);
+    const matches = response.data.sport_events || [];
+    res.json(matches);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching past matches', error: error.message });
+  }
+};
