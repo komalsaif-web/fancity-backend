@@ -4,7 +4,7 @@ const {
   getLiveMatches,
   getUpcomingMatches,
   getPastMatches
-} = require('../controllers/matchController');
+} = require('../controllers/badmintonController');
 
 router.get('/live', getLiveMatches);
 router.get('/upcoming', getUpcomingMatches);
