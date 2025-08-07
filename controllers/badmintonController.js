@@ -1,57 +1,53 @@
-// controllers/badmintonController.js
 const puppeteer = require('puppeteer');
 
 const fetchBadmintonData = async (req, res) => {
-  const { type } = req.query;
-
   try {
-    const browser = await puppeteer.launch({ headless: "new" });
+    const { type } = req.query; // 'live', 'past', or 'upcoming'
+    const url = 'https://www.flashscore.com/badminton/';
+
+    const browser = await puppeteer.launch({ headless: 'new' });
     const page = await browser.newPage();
-    await page.goto('https://www.google.com/search?q=badminton+live+score', { waitUntil: 'domcontentloaded' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    await page.waitForSelector('div[jsname]');
+    await page.waitForSelector('.event__match');
 
-    const results = await page.evaluate(() => {
-      const matches = [];
-      const rows = document.querySelectorAll('div[jsname] div[class*="imspo_mt__"]');
+    const matches = await page.$$eval('.event__match', (elements, type) => {
+      return elements.map(el => {
+        const homePlayer = el.querySelector('.event__participant--home')?.textContent.trim();
+        const awayPlayer = el.querySelector('.event__participant--away')?.textContent.trim();
+        const matchTime = el.querySelector('.event__time')?.textContent.trim();
+        const score = el.querySelector('.event__scores')?.textContent.trim() || '';
+        const statusText = el.querySelector('.event__stage--block')?.textContent.trim() || '';
 
-      rows.forEach(row => {
-        const title = row.querySelector('.ellipsisize')?.textContent?.trim();
-        const time = row.querySelector('.imspo_mt__ts-wt')?.textContent?.trim();
-        const status = row.querySelector('.imspo_mt__sta-imspo')?.textContent?.trim();
-        const score = row.querySelector('.imspo_mt__scr')?.textContent?.trim();
-
-        if (title) {
-          matches.push({
-            title,
-            time: time || '',
-            score: score || '',
-            status: status || '',
-          });
+        let statusType = 'upcoming';
+        if (statusText.includes('FT') || statusText.includes('Finished')) {
+          statusType = 'past';
+        } else if (statusText) {
+          statusType = 'live';
         }
-      });
 
-      return matches;
-    });
+        if (type === statusType) {
+          return {
+            team1: homePlayer,
+            team2: awayPlayer,
+            team3: null,
+            score: score || null,
+            date: matchTime || null,
+            team1_country: 'us',
+            team2_country: 'us',
+            team3_country: null
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    }, type);
 
     await browser.close();
 
-    if (!results.length) {
-      return res.status(404).json({ message: 'No data found from Google' });
-    }
-
-    // Optionally filter by type: live, past, upcoming
-    const filtered = results.filter(match => {
-      if (type === 'live') return match.status?.toLowerCase().includes('live');
-      if (type === 'past') return match.status?.toLowerCase().includes('final') || match.status?.toLowerCase().includes('won');
-      if (type === 'upcoming') return match.status?.toLowerCase().includes('upcoming') || match.time;
-      return true; // all
-    });
-
-    return res.json(filtered);
+    res.json({ success: true, count: matches.length, matches });
   } catch (error) {
-    console.error('Scraping error:', error.message);
-    return res.status(500).json({ error: 'Failed to scrape Google' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Scraping failed' });
   }
 };
 
