@@ -14,10 +14,10 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRoute = require('./routes/authRoutes');
-const badmintonRoutes = require('./routes/badmintonRoutes');
+const hockeyRoutes = require('./routes/hockeyRoutes');
 
 app.use('/api', authRoute);
-app.use('/api', badmintonRoutes);
+app.use('/api', hockeyRoutes);
 
 
 
