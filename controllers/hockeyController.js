@@ -1,6 +1,7 @@
 const API_KEY = process.env.GROQ_API_KEY;
 const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
+// --- Utility to fetch and safely parse JSON from Groq ---
 async function fetchMatches(prompt) {
   const res = await fetch(ENDPOINT, {
     method: "POST",
@@ -16,81 +17,97 @@ async function fetchMatches(prompt) {
   });
 
   const data = await res.json();
-  let text = data.choices[0]?.message?.content || "[]";
 
-  if (text.includes("```")) {
-    const start = text.indexOf("```");
-    const end = text.lastIndexOf("```");
-    text = text.substring(start + 3, end).replace(/^json/, "").trim();
+  if (!data.choices || !data.choices[0]?.message?.content) {
+    console.error("❌ No content from Groq:", data);
+    return [];
+  }
+
+  let text = data.choices[0].message.content.trim();
+
+  // Extract only JSON from markdown code block
+  const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
+  if (codeBlockMatch) {
+    text = codeBlockMatch[1].trim();
   }
 
   try {
     return JSON.parse(text);
-  } catch (e) {
-    console.error("❌ Failed to parse AI response:", text);
+  } catch (err) {
+    console.error("❌ Failed to parse AI JSON:", text);
     return [];
   }
 }
 
-// ---------------------- International ----------------------
-exports.getPastInternational = async (req, res) => {
+// Prompts
+const prompts = {
+  pastInternational: "Give last 5 international hockey matches in JSON array with: team1, team2, score, date, flag1 (ISO 2-letter code), flag2.",
+  upcomingInternational: "Give next 5 international hockey matches as JSON array: team1, team2, date, time, flag1 (ISO 2-letter code), flag2.",
+  liveInternational: "Give 5 current live international hockey matches in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, flag1, flag2 (ISO 2-letter codes).",
+  pastLeague: "Give last 5 league hockey matches in JSON array with: team1, team2, score, date, league_name, flag1 (ISO 2-letter code), flag2.",
+  upcomingLeague: "Give next 5 league hockey matches as JSON array: team1, team2, date, time, league_name, flag1 (ISO 2-letter code), flag2.",
+  liveLeague: "Give 5 current live league hockey matches in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, league_name, flag1, flag2 (ISO 2-letter codes)."
+};
+
+// ---------------------- All Combined ----------------------
+exports.getAllMatches = async (req, res) => {
   try {
-    const prompt = "Give last 5 international hockey matches in JSON array with: team1, team2, score, date, flag1 (ISO 2-letter code), flag2.";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
+    const [
+      pastInternational,
+      upcomingInternational,
+      liveInternational,
+      pastLeague,
+      upcomingLeague,
+      liveLeague
+    ] = await Promise.all([
+      fetchMatches(prompts.pastInternational),
+      fetchMatches(prompts.upcomingInternational),
+      fetchMatches(prompts.liveInternational),
+      fetchMatches(prompts.pastLeague),
+      fetchMatches(prompts.upcomingLeague),
+      fetchMatches(prompts.liveLeague)
+    ]);
+
+    res.json({
+      past: {
+        international: pastInternational,
+        league: pastLeague
+      },
+      upcoming: {
+        international: upcomingInternational,
+        league: upcomingLeague
+      },
+      live: {
+        international: liveInternational,
+        league: liveLeague
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};
+
+// ---------------------- Individual ----------------------
+exports.getPastInternational = async (req, res) => {
+  res.json(await fetchMatches(prompts.pastInternational));
 };
 
 exports.getUpcomingInternational = async (req, res) => {
-  try {
-    const prompt = "Give next 5 international hockey matches as JSON array: team1, team2, date, time, flag1 (ISO 2-letter code), flag2.";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(await fetchMatches(prompts.upcomingInternational));
 };
 
 exports.getLiveInternational = async (req, res) => {
-  try {
-    const prompt = "Give 5 current live hockey matches from around the world in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, flag1, flag2 (ISO 2-letter codes).";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(await fetchMatches(prompts.liveInternational));
 };
 
-// ---------------------- League ----------------------
 exports.getPastLeague = async (req, res) => {
-  try {
-    const prompt = "Give last 5 league hockey matches in JSON array with: team1, team2, score, date, league_name, flag1 (ISO 2-letter code), flag2.";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(await fetchMatches(prompts.pastLeague));
 };
 
 exports.getUpcomingLeague = async (req, res) => {
-  try {
-    const prompt = "Give next 5 league hockey matches as JSON array: team1, team2, date, time, league_name, flag1 (ISO 2-letter code), flag2.";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(await fetchMatches(prompts.upcomingLeague));
 };
 
 exports.getLiveLeague = async (req, res) => {
-  try {
-    const prompt = "Give 5 current live league hockey matches in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, league_name, flag1, flag2 (ISO 2-letter codes).";
-    const matches = await fetchMatches(prompt);
-    res.json(matches);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(await fetchMatches(prompts.liveLeague));
 };
- 
