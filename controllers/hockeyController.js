@@ -3,38 +3,48 @@ const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
 // --- Utility to fetch and safely parse JSON from Groq ---
 async function fetchMatches(prompt) {
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "llama3-70b-8192",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-    }),
-  });
-
-  const data = await res.json();
-
-  if (!data.choices || !data.choices[0]?.message?.content) {
-    console.error("❌ No content from Groq:", data);
-    return [];
-  }
-
-  let text = data.choices[0].message.content.trim();
-
-  // Extract only JSON from markdown code block
-  const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
-  if (codeBlockMatch) {
-    text = codeBlockMatch[1].trim();
-  }
+  console.log("🟡 Fetching with prompt:", prompt);
+  console.log("🔑 Using API_KEY:", API_KEY ? "✅ Set" : "❌ MISSING");
 
   try {
-    return JSON.parse(text);
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      }),
+    });
+
+    console.log("📡 Groq status:", res.status);
+    const data = await res.json();
+    console.log("📦 Raw Groq Response:", JSON.stringify(data, null, 2));
+
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      console.error("❌ No content from Groq");
+      return [];
+    }
+
+    let text = data.choices[0].message.content.trim();
+    console.log("📝 Raw AI text:", text);
+
+    // Extract JSON from code block if needed
+    const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
+    if (codeBlockMatch) {
+      text = codeBlockMatch[1].trim();
+      console.log("🔍 Extracted JSON text:", text);
+    }
+
+    const parsed = JSON.parse(text);
+    console.log("✅ Parsed JSON:", parsed);
+    return parsed;
+
   } catch (err) {
-    console.error("❌ Failed to parse AI JSON:", text);
+    console.error("❌ fetchMatches error:", err);
     return [];
   }
 }
@@ -51,6 +61,7 @@ const prompts = {
 
 // ---------------------- All Combined ----------------------
 exports.getAllMatches = async (req, res) => {
+  console.log("🚀 getAllMatches called");
   try {
     const [
       pastInternational,
@@ -83,31 +94,7 @@ exports.getAllMatches = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error("❌ getAllMatches error:", err);
     res.status(500).json({ error: err.message });
   }
-};
-
-// ---------------------- Individual ----------------------
-exports.getPastInternational = async (req, res) => {
-  res.json(await fetchMatches(prompts.pastInternational));
-};
-
-exports.getUpcomingInternational = async (req, res) => {
-  res.json(await fetchMatches(prompts.upcomingInternational));
-};
-
-exports.getLiveInternational = async (req, res) => {
-  res.json(await fetchMatches(prompts.liveInternational));
-};
-
-exports.getPastLeague = async (req, res) => {
-  res.json(await fetchMatches(prompts.pastLeague));
-};
-
-exports.getUpcomingLeague = async (req, res) => {
-  res.json(await fetchMatches(prompts.upcomingLeague));
-};
-
-exports.getLiveLeague = async (req, res) => {
-  res.json(await fetchMatches(prompts.liveLeague));
 };
