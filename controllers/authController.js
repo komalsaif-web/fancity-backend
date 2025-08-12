@@ -469,6 +469,40 @@ const manuallyVerifyUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to verify user manually', error: error.message });
   }
 };
+// ✅ Cast Vote
+const castVote = async (req, res) => {
+  try {
+    const { id } = req.params; // user id
+    const { team } = req.body; // team name
+
+    if (!id || !team) {
+      return res.status(400).json({ message: 'User ID and team name are required' });
+    }
+
+    const success = await updateUserVote(id, team);
+
+    if (!success) {
+      return res.status(404).json({ message: 'User not found or vote not saved' });
+    }
+
+    res.status(200).json({ message: `Vote for ${team} saved successfully` });
+  } catch (error) {
+    console.error('Cast Vote Error:', error.message);
+    res.status(500).json({ message: 'Failed to cast vote', error: error.message });
+  }
+};
+
+// ✅ Get All Votes
+const getVotes = async (req, res) => {
+  try {
+    const votes = await getAllVotes();
+    res.status(200).json({ votes });
+  } catch (error) {
+    console.error('Get Votes Error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch votes', error: error.message });
+  }
+};
+
 
 
 module.exports = {
@@ -491,4 +525,6 @@ module.exports = {
   setContinueVideo,
   getContinueVideo,
   manuallyVerifyUser,
+   castVote,
+  getVotes
 };

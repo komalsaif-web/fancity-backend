@@ -19,7 +19,9 @@ const {
   getSavedVideos,
   setContinueVideo,
   getContinueVideo,
-  manuallyVerifyUser
+  manuallyVerifyUser,
+  castVote,
+  getVotes
 } = require('../controllers/authController');
 
 router.post('/signup', signup);
@@ -45,5 +47,9 @@ router.get('/:id/saved-videos', getSavedVideos);
 // ✅ Continue Watching
 router.post('/:id/continue-video', setContinueVideo);
 router.get('/:id/continue-video', getContinueVideo);
+
+// ✅ Voting Routes
+router.post('/:id/vote', castVote); // cast vote
+router.get('/votes/all', getVotes); // get all votes
 module.exports = router;
  

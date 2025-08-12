@@ -144,6 +144,22 @@ const updateUserVerification = async (userId) => {
   );
   return result.rowCount > 0;
 };
+// 🔹 Save vote for a user
+const updateUserVote = async (userId, teamName) => {
+  const result = await pool.query(
+    'UPDATE fancity_users SET vote = $1 WHERE id = $2',
+    [teamName, userId]
+  );
+  return result.rowCount > 0;
+};
+
+// 🔹 Get all votes
+const getAllVotes = async () => {
+  const result = await pool.query(
+    'SELECT id, name, email, vote FROM fancity_users WHERE vote IS NOT NULL'
+  );
+  return result.rows;
+};
 
 // ✅ Export all
 module.exports = {
@@ -165,4 +181,6 @@ module.exports = {
   getSavedVideosByUserId,
   getContinueVideoByUserId,
   updateUserVerification,
+   updateUserVote,
+  getAllVotes
 };
