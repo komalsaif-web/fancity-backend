@@ -22,6 +22,8 @@ const {
   getSavedVideosByUserId,
   getContinueVideoByUserId,
   updateUserVerification,
+  updateUserVote,
+  getAllVotes
 } = require('../models/userModel');
 
 // 📧 Send OTP via email
