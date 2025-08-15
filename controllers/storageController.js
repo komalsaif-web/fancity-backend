@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -9,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Upload File
+// Upload File (Memory Storage - Vercel Safe)
 export const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
@@ -20,11 +19,9 @@ export const uploadFile = async (req, res) => {
 
     const { data, error } = await supabase.storage
       .from(process.env.BUCKET_NAME) // fancity-images
-      .upload(filePath, fs.createReadStream(req.file.path), {
+      .upload(filePath, req.file.buffer, {
         contentType: req.file.mimetype,
       });
-
-    fs.unlinkSync(req.file.path);
 
     if (error) throw error;
 
@@ -32,7 +29,11 @@ export const uploadFile = async (req, res) => {
       .from(process.env.BUCKET_NAME)
       .getPublicUrl(filePath).data.publicUrl;
 
-    res.json({ message: 'File uploaded successfully', publicUrl });
+    res.json({
+      message: 'File uploaded successfully',
+      filePath,
+      publicUrl
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -43,9 +44,13 @@ export const getSignedUrl = async (req, res) => {
   try {
     const { path: filePath } = req.body;
 
+    if (!filePath) {
+      return res.status(400).json({ error: 'File path is required' });
+    }
+
     const { data, error } = await supabase.storage
       .from(process.env.BUCKET_NAME)
-      .createSignedUrl(filePath, 60 * 60);
+      .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
 
     if (error) throw error;
 
