@@ -1,9 +1,12 @@
-const express = require('express');
-const multer = require('multer');
-const { uploadFile, getSignedUrl } = require('../controllers/storageController');
+// storageRoutes.js
+import express from 'express';
+import multer from 'multer';
+import { uploadFile, getSignedUrl } from '../controllers/storageController.js';
 
 const router = express.Router();
-const upload = multer({ dest: 'temp/' });
+
+// Memory storage (file RAM me store hoti hai)
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/upload', upload.single('file'), uploadFile);
 router.post('/signed-url', getSignedUrl);
