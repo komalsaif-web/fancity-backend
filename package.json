@@ -10,15 +10,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "country-list": "^2.3.0",
     "crypto-js": "^4.2.0",
-    "dotenv": "^17.2.0",
+    "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "i18n-iso-countries": "^7.14.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
     "pg": "^8.16.3",
     "puppeteer": "^24.16.0"

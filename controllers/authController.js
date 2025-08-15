@@ -505,8 +505,6 @@ const getVotes = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   signup,
   resendOtp,
