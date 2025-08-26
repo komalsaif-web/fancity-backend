@@ -49,49 +49,27 @@ async function fetchMatches(prompt) {
   }
 }
 
-// Prompts
+// ---------------- Prompts for Formula-1 ----------------
 const prompts = {
-  pastInternational: "Give last 5 international football matches in JSON array with: team1, team2, score, date, flag1 (ISO 2-letter code), flag2.",
-  upcomingInternational: "Give next 5 international football matches as JSON array: team1, team2, date, time, flag1 (ISO 2-letter code), flag2.",
-  liveInternational: "Give 5 current live international football matches in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, flag1, flag2 (ISO 2-letter codes).",
-  pastLeague: "Give last 5 league football matches in JSON array with: team1, team2, score, date, league_name, flag1 (ISO 2-letter code), flag2.",
-  upcomingLeague: "Give next 5 league football matches as JSON array: team1, team2, date, time, league_name, flag1 (ISO 2-letter code), flag2.",
-  liveLeague: "Give 5 current live league football matches in JSON array with: team1, team2, score1, score2, time, period, venue, last_play, league_name, flag1, flag2 (ISO 2-letter codes)."
+  pastRaces: "Give last 5 Formula 1 races in JSON array with: race_name, circuit, country, winner, date, flag (ISO 2-letter code).",
+  upcomingRaces: "Give next 5 Formula 1 races as JSON array: race_name, circuit, country, date, time, flag (ISO 2-letter code).",
+  liveRaces: "Give 5 current live Formula 1 races in JSON array with: race_name, circuit, country, lap, total_laps, leader, time_elapsed, flag (ISO 2-letter code)."
 };
 
 // ---------------------- All Combined ----------------------
 exports.getAllMatches = async (req, res) => {
   console.log("🚀 getAllMatches called");
   try {
-    const [
-      pastInternational,
-      upcomingInternational,
-      liveInternational,
-      pastLeague,
-      upcomingLeague,
-      liveLeague
-    ] = await Promise.all([
-      fetchMatches(prompts.pastInternational),
-      fetchMatches(prompts.upcomingInternational),
-      fetchMatches(prompts.liveInternational),
-      fetchMatches(prompts.pastLeague),
-      fetchMatches(prompts.upcomingLeague),
-      fetchMatches(prompts.liveLeague)
+    const [pastRaces, upcomingRaces, liveRaces] = await Promise.all([
+      fetchMatches(prompts.pastRaces),
+      fetchMatches(prompts.upcomingRaces),
+      fetchMatches(prompts.liveRaces)
     ]);
 
     res.json({
-      past: {
-        international: pastInternational,
-        league: pastLeague
-      },
-      upcoming: {
-        international: upcomingInternational,
-        league: upcomingLeague
-      },
-      live: {
-        international: liveInternational,
-        league: liveLeague
-      }
+      past: pastRaces,
+      upcoming: upcomingRaces,
+      live: liveRaces
     });
   } catch (err) {
     console.error("❌ getAllMatches error:", err);
