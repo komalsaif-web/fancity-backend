@@ -1,9 +1,9 @@
-import express from "express";
-import { getF1Races } from "../controllers/f1Controller.js";
+const express = require("express");
+const { getF1Races } = require("../controllers/f1Controller");
 
 const router = express.Router();
 
 // GET /api/f1/races?country=UAE&type=live|upcoming|past
 router.get("/races", getF1Races);
 
-export default router;
+module.exports = router;
