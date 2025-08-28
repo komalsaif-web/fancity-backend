@@ -1,8 +1,9 @@
-const express = require("express");
+import express from "express";
+import { getF1Races } from "../controllers/f1Controller.js";
+
 const router = express.Router();
-const f1Controller = require("../controllers/f1Controller");
 
-// Only one combined endpoint
-router.get("/all", f1Controller.getAllMatches);
+// GET /api/f1/races?country=UAE&type=live|upcoming|past
+router.get("/races", getF1Races);
 
-module.exports = router;
+export default router;

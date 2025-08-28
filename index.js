@@ -20,7 +20,7 @@ const storageRoutes = require('./routes/storageRoutes');
 
 app.use('/api', authRoute);
 app.use('/api', hockeyRoutes);
-app.use('/api', f1Routes);
+app.use('/api/f1', f1Routes);
 app.use('/api', storageRoutes);
 
 

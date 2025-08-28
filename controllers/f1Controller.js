@@ -1,78 +1,66 @@
+import fetch from "node-fetch";
+
+const GROQ_API_URL = "https://api.groq.com/v1/llama3";
 const API_KEY = process.env.GROQ_API_KEY;
-const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
-// --- Utility to fetch and safely parse JSON from Groq ---
-async function fetchMatches(prompt) {
-  console.log("🟡 Fetching with prompt:", prompt);
-  console.log("🔑 Using API_KEY:", API_KEY ? "✅ Set" : "❌ MISSING");
-
+// Helper: get F1 races for a country (live/upcoming/past)
+export const getF1Races = async (req, res) => {
   try {
-    const res = await fetch(ENDPOINT, {
+    const { country = "UAE", type = "live" } = req.query;
+
+    // Build prompt dynamically for LLaMA 3
+    const prompt = `
+      Give me ${type} Formula 1 races in ${country}.
+      Include:
+      - Country
+      - Race name
+      - Teams and drivers
+      - Start time (local)
+      Format the output as a JSON array, example:
+      [
+        {
+          "country": "UAE",
+          "race": "Abu Dhabi GP",
+          "teams": [
+            {"team": "Mercedes", "drivers": ["Lewis Hamilton","George Russell"]},
+            {"team": "Red Bull", "drivers": ["Max Verstappen","Sergio Perez"]}
+          ],
+          "start_time": "2025-09-29T15:00:00+04:00"
+        }
+      ]
+    `;
+
+    // Call Groq LLaMA 3 API
+    const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
+        model: "llama-3",
+        prompt,
+        max_tokens: 1200,
       }),
     });
 
-    console.log("📡 Groq status:", res.status);
-    const data = await res.json();
-    console.log("📦 Raw Groq Response:", JSON.stringify(data, null, 2));
+    const data = await response.json();
 
-    if (!data.choices || !data.choices[0]?.message?.content) {
-      console.error("❌ No content from Groq");
-      return [];
-    }
+    // Parse the returned text (assumes JSON array)
+    let races = JSON.parse(data.text);
 
-    let text = data.choices[0].message.content.trim();
-    console.log("📝 Raw AI text:", text);
+    // --- Simulate "live update" trick ---
+    // For example: only show first N races based on current time
+    const raceCount = Math.min(
+      races.length,
+      Math.floor((Date.now() / 1000 / 60) % races.length) + 1 // cycles 1,2,3...
+    );
 
-    // Extract JSON from code block if needed
-    const codeBlockMatch = text.match(/```(?:json)?([\s\S]*?)```/i);
-    if (codeBlockMatch) {
-      text = codeBlockMatch[1].trim();
-      console.log("🔍 Extracted JSON text:", text);
-    }
+    races = races.slice(0, raceCount);
 
-    const parsed = JSON.parse(text);
-    console.log("✅ Parsed JSON:", parsed);
-    return parsed;
-
-  } catch (err) {
-    console.error("❌ fetchMatches error:", err);
-    return [];
-  }
-}
-
-// ---------------- Prompts for Formula-1 ----------------
-const prompts = {
-  pastRaces: "Give last 5 Formula 1 races in JSON array with: race_name, circuit, country, winner, date, flag (ISO 2-letter code).",
-  upcomingRaces: "Give next 5 Formula 1 races as JSON array: race_name, circuit, country, date, time, flag (ISO 2-letter code).",
-  liveRaces: "Give 5 current live Formula 1 races in JSON array with: race_name, circuit, country, lap, total_laps, leader, time_elapsed, flag (ISO 2-letter code)."
-};
-
-// ---------------------- All Combined ----------------------
-exports.getAllMatches = async (req, res) => {
-  console.log("🚀 getAllMatches called");
-  try {
-    const [pastRaces, upcomingRaces, liveRaces] = await Promise.all([
-      fetchMatches(prompts.pastRaces),
-      fetchMatches(prompts.upcomingRaces),
-      fetchMatches(prompts.liveRaces)
-    ]);
-
-    res.json({
-      past: pastRaces,
-      upcoming: upcomingRaces,
-      live: liveRaces
-    });
-  } catch (err) {
-    console.error("❌ getAllMatches error:", err);
-    res.status(500).json({ error: err.message });
+    res.json({ success: true, races });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
