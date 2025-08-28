@@ -6,13 +6,14 @@ const getF1Races = async (req, res) => {
     const { country = "UAE", type = "live" } = req.query;
 
     const prompt = `
+      Act as a JSON API.
+      Respond ONLY with a valid JSON array (no text before or after).
       Give me ${type} Formula 1 races in ${country}.
-      Include:
-      - Country
-      - Race name
-      - Teams and drivers
-      - Start time (local)
-      Format the response strictly as a JSON array only.
+      Each object should have:
+      - country
+      - race_name
+      - teams (array of {team, drivers: []})
+      - start_time (local ISO8601 format)
     `;
 
     const response = await fetch(GROQ_API_URL, {
@@ -31,14 +32,19 @@ const getF1Races = async (req, res) => {
 
     const data = await response.json();
 
-    // Groq AI ka jawaab
-    const content = data.choices?.[0]?.message?.content || "[]";
+    let content = data.choices?.[0]?.message?.content || "[]";
+
+    // Cleanup: extract JSON array
+    const jsonMatch = content.match(/\[.*\]/s);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
 
     let races;
     try {
-      races = JSON.parse(content); // ensure JSON array ban jaye
+      races = JSON.parse(content);
     } catch (err) {
-      console.error("JSON parse error:", err);
+      console.error("JSON parse error:", err, "Raw:", content);
       races = [];
     }
 
