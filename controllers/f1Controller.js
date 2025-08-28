@@ -1,9 +1,6 @@
-// f1Controller.js
-
-const GROQ_API_URL = "https://api.groq.com/v1/llama3";
+const GROQ_API_URL = "https://api.groq.com/v1/chat/completions";
 const API_KEY = process.env.GROQ_API_KEY;
 
-// Helper: get F1 races for a country (live/upcoming/past)
 const getF1Races = async (req, res) => {
   try {
     const { country = "UAE", type = "live" } = req.query;
@@ -15,10 +12,9 @@ const getF1Races = async (req, res) => {
       - Race name
       - Teams and drivers
       - Start time (local)
-      Format as JSON array
+      Format the response strictly as a JSON array only.
     `;
 
-    // Use native fetch (Node 18+)
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -26,37 +22,29 @@ const getF1Races = async (req, res) => {
         "Authorization": `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3",
-        prompt,
-        max_tokens: 1200,
+        model: "llama3-70b-8192",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 800,
+        temperature: 0.3,
       }),
     });
 
     const data = await response.json();
 
-    // --- Robust JSON parse ---
-    let races = [];
+    // Groq AI ka jawaab
+    const content = data.choices?.[0]?.message?.content || "[]";
+
+    let races;
     try {
-      races = JSON.parse(data.text);
-      if (!Array.isArray(races)) {
-        console.error("Groq API returned non-array:", data.text);
-        races = [];
-      }
+      races = JSON.parse(content); // ensure JSON array ban jaye
     } catch (err) {
-      console.error("Failed to parse Groq API response:", data.text);
+      console.error("JSON parse error:", err);
       races = [];
     }
 
-    // --- Simulate "live update" trick ---
-    const raceCount = Math.min(
-      races.length,
-      Math.floor((Date.now() / 1000 / 60) % (races.length || 1)) + 1
-    );
-    races = races.slice(0, raceCount);
-
     res.json({ success: true, races });
   } catch (error) {
-    console.error(error);
+    console.error("Groq fetch error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
