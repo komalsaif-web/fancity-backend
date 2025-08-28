@@ -1,8 +1,9 @@
-// const fetch = require("node-fetch"); // remove this
+// f1Controller.js
 
 const GROQ_API_URL = "https://api.groq.com/v1/llama3";
 const API_KEY = process.env.GROQ_API_KEY;
 
+// Helper: get F1 races for a country (live/upcoming/past)
 const getF1Races = async (req, res) => {
   try {
     const { country = "UAE", type = "live" } = req.query;
@@ -17,6 +18,7 @@ const getF1Races = async (req, res) => {
       Format as JSON array
     `;
 
+    // Use native fetch (Node 18+)
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -32,13 +34,24 @@ const getF1Races = async (req, res) => {
 
     const data = await response.json();
 
-    let races = JSON.parse(data.text);
+    // --- Robust JSON parse ---
+    let races = [];
+    try {
+      races = JSON.parse(data.text);
+      if (!Array.isArray(races)) {
+        console.error("Groq API returned non-array:", data.text);
+        races = [];
+      }
+    } catch (err) {
+      console.error("Failed to parse Groq API response:", data.text);
+      races = [];
+    }
 
+    // --- Simulate "live update" trick ---
     const raceCount = Math.min(
       races.length,
-      Math.floor((Date.now() / 1000 / 60) % races.length) + 1
+      Math.floor((Date.now() / 1000 / 60) % (races.length || 1)) + 1
     );
-
     races = races.slice(0, raceCount);
 
     res.json({ success: true, races });
