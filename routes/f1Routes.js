@@ -1,9 +1,13 @@
 const express = require("express");
-const { getF1Races } = require("../controllers/f1Controller");
-
 const router = express.Router();
+const {
+  getLiveRaces,
+  getPastRaces,
+  getUpcomingRaces,
+} = require("../controllers/f1Controller");
 
-// GET /api/f1/races?country=UAE&type=live|upcoming|past
-router.get("/races", getF1Races);
+router.get("/live", getLiveRaces);
+router.get("/past", getPastRaces);
+router.get("/upcoming", getUpcomingRaces);
 
 module.exports = router;
