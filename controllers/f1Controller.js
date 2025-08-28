@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+// const fetch = require("node-fetch"); // remove this
 
 const GROQ_API_URL = "https://api.groq.com/v1/llama3";
 const API_KEY = process.env.GROQ_API_KEY;
@@ -34,11 +34,11 @@ const getF1Races = async (req, res) => {
 
     let races = JSON.parse(data.text);
 
-    // Simulate "live update" trick
     const raceCount = Math.min(
       races.length,
       Math.floor((Date.now() / 1000 / 60) % races.length) + 1
     );
+
     races = races.slice(0, raceCount);
 
     res.json({ success: true, races });
