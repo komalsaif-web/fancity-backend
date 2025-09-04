@@ -17,15 +17,17 @@ const authRoute = require('./routes/authRoutes');
 const hockeyRoutes = require('./routes/hockeyRoutes');
 const f1Routes = require('./routes/f1Routes');
 const storageRoutes = require('./routes/storageRoutes');
+const basketballRoutes = require('./routes/basketballRoutes');
+
 
 app.use('/api', authRoute);
 app.use('/api', hockeyRoutes);
 app.use('/api/f1', f1Routes);
 app.use('/api', storageRoutes);
-
+app.use('/api/basketball', basketballRoutes);
 
 
 // Export handler for Vercel
 module.exports = (req, res) => {
   app(req, res);
-};
+}
