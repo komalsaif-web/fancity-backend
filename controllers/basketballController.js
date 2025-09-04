@@ -38,25 +38,22 @@ async function fetchMatches(prompt) {
   }
 }
 
-// --- Prompts for Basketball, International, and League ---
+// --- Prompts ---
 const prompts = {
-  // Basketball
   past: "Give last 5 Basketball matches in JSON array with: match_name, date, winner, country, flag (ISO code).",
   upcoming: "Give next 5 Basketball matches in JSON array with: match_name, date, time, country, flag (ISO code).",
   live: "Give 3 current live Basketball matches in JSON array with: match_name, quarter, leader, country, flag (ISO code), status.",
 
-  // International Basketball
   pastInternational: "Give last 5 International Basketball matches in JSON array with: match_name, date, winner, country, flag (ISO code).",
   upcomingInternational: "Give next 5 International Basketball matches in JSON array with: match_name, date, time, country, flag (ISO code).",
   liveInternational: "Give 3 current live International Basketball matches in JSON array with: match_name, quarter, leader, country, flag (ISO code), status.",
 
-  // League Basketball
   pastLeague: "Give last 5 League Basketball matches in JSON array with: match_name, date, winner, country, flag (ISO code).",
   upcomingLeague: "Give next 5 League Basketball matches in JSON array with: match_name, date, time, country, flag (ISO code).",
   liveLeague: "Give 3 current live League Basketball matches in JSON array with: match_name, quarter, leader, country, flag (ISO code), status.",
 };
 
-// --- Basketball Controllers ---
+// --- Controllers ---
 exports.getPastMatches = async (req, res) => {
   const data = await fetchMatches(prompts.past);
   res.json({ success: true, matches: data });
@@ -72,7 +69,7 @@ exports.getLiveMatches = async (req, res) => {
   res.json({ success: true, matches: data });
 };
 
-// --- International Basketball Controllers ---
+// International
 exports.getPastInternationalMatches = async (req, res) => {
   const data = await fetchMatches(prompts.pastInternational);
   res.json({ success: true, matches: data });
@@ -88,7 +85,7 @@ exports.getLiveInternationalMatches = async (req, res) => {
   res.json({ success: true, matches: data });
 };
 
-// --- League Basketball Controllers ---
+// League
 exports.getPastLeagueMatches = async (req, res) => {
   const data = await fetchMatches(prompts.pastLeague);
   res.json({ success: true, matches: data });
