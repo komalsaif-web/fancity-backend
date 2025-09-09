@@ -504,6 +504,22 @@ const getVotes = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch votes', error: error.message });
   }
 };
+const sendLeaveApprovalEmail = async (email, status) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from: `"HR Department" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Leave ${status}`,
+    text: `Your leave has been ${status} by Admin.`
+  });
+};
 
 module.exports = {
   signup,
@@ -526,5 +542,6 @@ module.exports = {
   getContinueVideo,
   manuallyVerifyUser,
    castVote,
-  getVotes
+  getVotes,
+ sendLeaveApprovalEmail
 };

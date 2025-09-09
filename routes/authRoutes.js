@@ -21,7 +21,8 @@ const {
   getContinueVideo,
   manuallyVerifyUser,
   castVote,
-  getVotes
+  getVotes,
+  sendLeaveApprovalEmail
 } = require('../controllers/authController');
 
 router.post('/signup', signup);
@@ -38,6 +39,8 @@ router.get('/email/:email', getUserByEmailController);
 router.get('/all-users', getAllUsersController);
 router.delete('/delete-all-users', deleteAllUsersController);
 router.post('/verify-user', manuallyVerifyUser);
+router.post('/leave-email', sendLeaveApprovalEmail);
+
 
 // ✅ Saved Videos
 router.post('/:id/save-video', addSavedVideo);
