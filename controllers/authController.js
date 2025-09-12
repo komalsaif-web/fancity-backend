@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const CryptoJS = require('crypto-js');
+const crypto = require('crypto');
+require('dotenv').config();
 
 const {
   createUser,
@@ -26,29 +28,115 @@ const {
   getAllVotes
 } = require('../models/userModel');
 
-// 📧 Send OTP via email
-const sendOtpEmail = async (email, otp) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+// OTP Store (aap chahein to DB use kar sakte ho)
+const otpStore = {};
 
+// Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// ✅ Email send karne wala helper function
+const sendOtpEmail = async (email, otp) => {
   await transporter.sendMail({
-    from: `"FANCITY" <${process.env.EMAIL_USER}>`,
+    from: `"Spark Education" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Your OTP Code',
+    subject: 'Spark Education - OTP Verification',
     text: `Your OTP is ${otp}. It will expire in 1 minute.`,
   });
 };
+
+// ✅ Generate 4-digit OTP
+const generateOtp = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+// ---------------------------
+//  Send OTP
+// ---------------------------
+const sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ ok: false, message: 'Email required' });
+
+    const otp = generateOtp();
+
+    // Store OTP with expiry
+    otpStore[email] = {
+      otp,
+      expiresAt: Date.now() + 60 * 1000, // 1 minute expiry
+    };
+
+    // Send OTP
+    await sendOtpEmail(email, otp);
+
+    return res.json({ ok: true, message: 'OTP sent to email' });
+  } catch (error) {
+    console.error('Send OTP Error:', error);
+    return res.status(500).json({ ok: false, message: 'Failed to send OTP' });
+  }
+};
+
+// ---------------------------
+//  Resend OTP
+// ---------------------------
+const resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ ok: false, message: 'Email required' });
+
+    const otp = generateOtp();
+
+    otpStore[email] = {
+      otp,
+      expiresAt: Date.now() + 60 * 1000, // reset expiry
+    };
+
+    await sendOtpEmail(email, otp);
+
+    return res.json({ ok: true, message: 'OTP resent to email' });
+  } catch (error) {
+    console.error('Resend OTP Error:', error);
+    return res.status(500).json({ ok: false, message: 'Failed to resend OTP' });
+  }
+};
+
+// ---------------------------
+//  Verify OTP
+// ---------------------------
+const verifyOtpCode = (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ ok: false, message: 'Email & OTP required' });
+
+    const record = otpStore[email];
+    if (!record) return res.status(400).json({ ok: false, message: 'OTP not found. Please request again.' });
+
+    if (Date.now() > record.expiresAt) {
+      return res.status(400).json({ ok: false, message: 'OTP expired. Please request again.' });
+    }
+
+    if (otp !== record.otp) {
+      return res.status(400).json({ ok: false, message: 'Invalid OTP' });
+    }
+
+    // OTP valid → remove from store
+    delete otpStore[email];
+
+    return res.json({ ok: true, message: 'OTP verified successfully' });
+  } catch (error) {
+    console.error('Verify OTP Error:', error);
+    return res.status(500).json({ ok: false, message: 'Failed to verify OTP' });
+  }
+};
+
 // ✅ SIGNUP FUNCTION with token
 const signup = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
-    // ✅ Only name, email, and password are required now
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
@@ -59,7 +147,7 @@ const signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await createUser(name, email, phone || null, hashedPassword); 
+    const user = await createUser(name, email, phone || null, hashedPassword);
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const encryptedToken = CryptoJS.AES.encrypt(token, process.env.ENCRYPTION_SECRET).toString();
@@ -78,56 +166,6 @@ const signup = async (req, res) => {
   } catch (error) {
     console.error('Signup Error:', error);
     res.status(500).json({ message: 'Signup failed', error: error.message });
-  }
-};
-
-const sendOtp = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-
-    const user = await findUserByEmail(email);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    if (user.is_verified) {
-      return res.status(400).json({ message: 'User is already verified' });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expire = new Date(Date.now() + 60 * 1000); // expires in 1 minute
-
-    await updateUserOtp(user.id, otp, expire);
-    console.log(`Generated OTP for ${email}: ${otp}`);
-
-    await sendOtpEmail(email, otp);
-
-    res.status(200).json({ message: 'OTP sent successfully' });
-  } catch (error) {
-    console.error('❌ Send OTP Error:', error.message);
-    res.status(500).json({ message: 'Failed to send OTP', error: error.message });
-  }
-};
-// ✅ VERIFY OTP
-const verifyOtpCode = async (req, res) => {
-  try {
-    const { email, otp } = req.body;
-
-    if (!email || !otp) {
-      return res.status(400).json({ message: 'Email and OTP are required' });
-    }
-
-    const user = await verifyOtp(email, otp);
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
-
-    await markUserVerified(user.id);
-
-    res.status(200).json({ message: 'Email verified successfully. You can now log in.' });
-  } catch (error) {
-    console.error('OTP Verification Error:', error);
-    res.status(500).json({ message: 'OTP verification failed', error: error.message });
   }
 };
 
@@ -282,31 +320,7 @@ const deleteUserAccount = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete user', error: error.message });
   }
 };
-const resendOtp = async (req, res) => {
-  try {
-    const { email } = req.body;
 
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-
-    const user = await findUserByEmail(email);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    if (user.is_verified) {
-      return res.status(400).json({ message: 'User is already verified' });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expire = new Date(Date.now() + 60 * 1000); // ✅ 1 minute expiry
-
-    await updateUserOtp(user.id, otp, expire);
-    await sendOtpEmail(email, otp);
-
-    res.status(200).json({ message: 'OTP resent successfully' });
-  } catch (error) {
-    console.error('Resend OTP Error:', error);
-    res.status(500).json({ message: 'Failed to resend OTP', error: error.message });
-  }
-};
 // ✅ Get user by email controller
 const getUserByEmailController = async (req, res) => {
   try {
@@ -328,6 +342,8 @@ const getUserByEmailController = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch user', error: error.message });
   }
 };
+
+// ✅ Get all users
 const getAllUsersController = async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -338,6 +354,7 @@ const getAllUsersController = async (req, res) => {
   }
 };
 
+// ✅ Delete all users
 const deleteAllUsersController = async (req, res) => {
   try {
     const deleted = await deleteAllUsers();
@@ -349,7 +366,8 @@ const deleteAllUsersController = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete all users', error: error.message });
   }
 };
-// 🔹 Add to saved videos (using only video URL)
+
+// 🔹 Add to saved videos
 const addSavedVideo = async (req, res) => {
   const { id } = req.params;
   const { video_url, thumbnail_url } = req.body;
@@ -362,10 +380,10 @@ const addSavedVideo = async (req, res) => {
     const user = await getUserById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const currentVideos = await getSavedVideosByUserId(id); // from DB
+    const currentVideos = await getSavedVideosByUserId(id);
     const updatedVideos = [...currentVideos, { video_url, thumbnail_url }];
 
-    await updateSavedVideos(id, JSON.stringify(updatedVideos)); // 💡 cast to JSON string
+    await updateSavedVideos(id, JSON.stringify(updatedVideos));
 
     res.status(200).json({
       message: 'Video added successfully',
@@ -376,8 +394,7 @@ const addSavedVideo = async (req, res) => {
   }
 };
 
-
-// 🔹 Delete saved video by video_id
+// 🔹 Delete saved video
 const deleteSavedVideo = async (req, res) => {
   const { id, videoUrl } = req.params;
 
@@ -386,10 +403,7 @@ const deleteSavedVideo = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const currentVideos = await getSavedVideosByUserId(id);
-
-    const updatedVideos = currentVideos.filter(
-      (v) => v.video_url !== videoUrl
-    );
+    const updatedVideos = currentVideos.filter((v) => v.video_url !== videoUrl);
 
     await updateSavedVideos(id, JSON.stringify(updatedVideos));
 
@@ -398,7 +412,6 @@ const deleteSavedVideo = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete video', error: error.message });
   }
 };
-
 
 // 🔹 Get saved videos
 const getSavedVideos = async (req, res) => {
@@ -415,7 +428,6 @@ const getSavedVideos = async (req, res) => {
   }
 };
 
-
 // 🔹 Set continue watching
 const setContinueVideo = async (req, res) => {
   const { id } = req.params;
@@ -431,6 +443,7 @@ const setContinueVideo = async (req, res) => {
   }
 };
 
+// 🔹 Get continue watching
 const getContinueVideo = async (req, res) => {
   const { id } = req.params;
 
@@ -452,7 +465,7 @@ const getContinueVideo = async (req, res) => {
   }
 };
 
-
+// ✅ Manually verify user
 const manuallyVerifyUser = async (req, res) => {
   try {
     const { id } = req.body;
@@ -471,11 +484,12 @@ const manuallyVerifyUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to verify user manually', error: error.message });
   }
 };
+
 // ✅ Cast Vote
 const castVote = async (req, res) => {
   try {
-    const { id } = req.params; // user id
-    const { team } = req.body; // team name
+    const { id } = req.params; 
+    const { team } = req.body; 
 
     if (!id || !team) {
       return res.status(400).json({ message: 'User ID and team name are required' });
@@ -504,15 +518,9 @@ const getVotes = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch votes', error: error.message });
   }
 };
-const sendLeaveApprovalEmail = async (email, status) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
 
+// ✅ Leave approval email
+const sendLeaveApprovalEmail = async (email, status) => {
   await transporter.sendMail({
     from: `"HR Department" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -535,13 +543,13 @@ module.exports = {
   getUserByEmailController,
   getAllUsersController,
   deleteAllUsersController,
-    addSavedVideo,
+  addSavedVideo,
   deleteSavedVideo,
   getSavedVideos,
   setContinueVideo,
   getContinueVideo,
   manuallyVerifyUser,
-   castVote,
+  castVote,
   getVotes,
- sendLeaveApprovalEmail
+  sendLeaveApprovalEmail
 };
