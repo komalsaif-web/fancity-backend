@@ -9,7 +9,11 @@ app.use(express.json());
 
 // ✅ Root route (health check)
 app.get("/", (req, res) => {
-  res.send("🚀 FanCity Backend API is running on Vercel!");
+  res.status(200).json({
+    ok: true,
+    message: "🚀 FanCity Backend API is running on Vercel!",
+    time: new Date().toISOString(),
+  });
 });
 
 // Import routes
