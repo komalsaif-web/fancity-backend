@@ -1,6 +1,7 @@
 const axios = require("axios");
+require("dotenv").config();
 
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const PROPERTY_PROMPT = `
 You are a Property Assistant.
