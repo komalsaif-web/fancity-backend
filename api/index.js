@@ -22,7 +22,8 @@ const hockeyRoutes = require("../routes/hockeyRoutes");
 const f1Routes = require("../routes/f1Routes");
 const storageRoutes = require("../routes/storageRoutes");
 const basketballRoutes = require("../routes/basketballRoutes");
-const propertyRoutes = require("../routes/propertyRoutes"); 
+const propertyRoutes = require("../routes/propertychatRoutes");
+const powercourseRoutes = require("../routes/powercourseRoute");
 
 // ✅ Mount routes
 app.use("/api/auth", authRoute);
@@ -30,6 +31,7 @@ app.use("/api/hockey", hockeyRoutes);
 app.use("/api/f1", f1Routes);
 app.use("/api/storage", storageRoutes);
 app.use("/api/basketball", basketballRoutes);
+app.use("/api", powercourseRoutes);
 app.use("/api", propertyRoutes);
 
 // ✅ Export app for Vercel
