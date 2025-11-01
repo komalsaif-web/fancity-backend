@@ -24,6 +24,7 @@ const storageRoutes = require("../routes/storageRoutes");
 const basketballRoutes = require("../routes/basketballRoutes");
 const propertyRoutes = require("../routes/propertychatRoutes");
 const powercourseRoutes = require("../routes/powercourseRoute");
+const yallaNellabRoutes = require("../routes/yallaNellabRoutes");
 
 // ✅ Mount routes
 app.use("/api/auth", authRoute);
@@ -33,6 +34,8 @@ app.use("/api/storage", storageRoutes);
 app.use("/api/basketball", basketballRoutes);
 app.use("/api", powercourseRoutes);
 app.use("/api", propertyRoutes);
+app.use("/api/yallaNellab", yallaNellabRoutes);
+
 
 // ✅ Export app for Vercel
 module.exports = app;
